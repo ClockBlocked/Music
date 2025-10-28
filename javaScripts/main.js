@@ -3394,10 +3394,16 @@ export const eventHandlers = {
 // APPLICATION INITIALIZATION
 // ===========================================
 export const app = {
+  _isInitialized: false, 
+  
   initialize: async function() {
-    console.log('🎵 Initializing MyBeats Application...');
+   if (this._isInitialized) {
+      console.warn("App already initialized. Skipping.");
+      return;
+    }
     
-    // Set window.music
+  this._isInitialized = true;
+
     window.music = music;
     
     // Initialize notifications
@@ -3524,55 +3530,6 @@ export const app = {
   }
 };
 
-// ===========================================
-// AUTO-INITIALIZE ON LOAD
-// ===========================================
-window.addEventListener("load", function() {
-  if (!window.appState) {
-    app.initialize();
-  }
-});
-
-window.MyTunesApp = {
-  initialize: app.initialize,
-  state: function() { return appState; },
-  api: function() { return window.musicAppAPI; },
-  goHome: app.goHome,
-};
-
-if (window.music) {
-  app.initialize();
-}
-
-// Expose navigation and playlists to window
-window.navigation = navigation;
-window.playlists = playlists;
-window.views = views;
-
-// Initialize event handlers on DOM ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    eventHandlers.init();
-  });
-} else {
-  eventHandlers.init();
-}
-
-// Initialize progress bar keyboard support
-document.addEventListener('DOMContentLoaded', () => {
-  app.initialize();
-  
-  const progressBar = document.getElementById('progressBar');
-  if (progressBar) {
-    progressBar.addEventListener('keydown', musicPlayer.ui.handleProgressBarKeyDown);
-  }
-  
-  setTimeout(() => {
-    if (notificationPlayer.setup) {
-      notificationPlayer.setup();
-    }
-  }, 100);
-});
 
 // ===========================================
 // EXPORTS
