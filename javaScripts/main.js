@@ -1946,23 +1946,17 @@ export const playlists = {
       notifications.show("Please enter a playlist name", NOTIFICATION_TYPES.WARNING);
       return null;
     }
-
     const playlist = {
-      id: Date.now().toString(),
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2), // Unique
       name: name.trim(),
       songs: [],
       created: new Date().toISOString(),
       description: "",
       cover: null,
     };
-
     appState.playlists.push(playlist);
     storage.save(STORAGE_KEYS.PLAYLISTS, appState.playlists);
-
-    if (typeof homePage?.renderPlaylists === "function") {
-      homePage.renderPlaylists();
-    }
-
+    if (typeof homePage?.renderPlaylists === "function") homePage.renderPlaylists();
     notifications.show(`Created playlist "${playlist.name}"`, NOTIFICATION_TYPES.SUCCESS);
     return playlist;
   },
@@ -1973,16 +1967,12 @@ export const playlists = {
       notifications.show("Playlist not found", NOTIFICATION_TYPES.ERROR);
       return false;
     }
-
-    const exists = playlist.songs.some((s) => s.id === song.id);
-    if (exists) {
+    if (playlist.songs.some((s) => s.id === song.id)) {
       notifications.show("Song already in playlist", NOTIFICATION_TYPES.WARNING);
       return false;
     }
-
     playlist.songs.push(song);
     storage.save(STORAGE_KEYS.PLAYLISTS, appState.playlists);
-
     notifications.show(`Added "${song.title}" to "${playlist.name}"`, NOTIFICATION_TYPES.SUCCESS);
     return true;
   },
@@ -1990,17 +1980,12 @@ export const playlists = {
   removeSong: (playlistId, songId) => {
     const playlist = appState.playlists.find((p) => p.id === playlistId);
     if (!playlist) return false;
-
-    const initialLength = playlist.songs.length;
-    playlist.songs = playlist.songs.filter((s) => s.id !== songId);
-
-    if (playlist.songs.length < initialLength) {
-      storage.save(STORAGE_KEYS.PLAYLISTS, appState.playlists);
-      notifications.show("Song removed from playlist", NOTIFICATION_TYPES.INFO);
-      return true;
-    }
-
-    return false;
+    const newSongs = playlist.songs.filter((s) => s.id !== songId);
+    if (newSongs.length === playlist.songs.length) return false;
+    playlist.songs = newSongs;
+    storage.save(STORAGE_KEYS.PLAYLISTS, appState.playlists);
+    notifications.show("Song removed from playlist", NOTIFICATION_TYPES.INFO);
+    return true;
   },
 
   play: (playlistId) => {
@@ -2009,45 +1994,31 @@ export const playlists = {
       notifications.show("Playlist is empty", NOTIFICATION_TYPES.WARNING);
       return;
     }
-
     appState.queue.clear();
-    playlist.songs.slice(1).forEach((song) => appState.queue.add(song));
+    playlist.songs.forEach((song) => appState.queue.add(song));
     musicPlayer.ui.playSong(playlist.songs[0]);
-
     notifications.show(`Playing playlist "${playlist.name}"`, NOTIFICATION_TYPES.SUCCESS);
   },
 
   remove: async (playlistId) => {
     const playlist = appState.playlists.find((p) => p.id === playlistId);
     if (!playlist) return false;
-    
     const confirmed = await overlays.dialog.confirm(
-      `Delete the playlist "${playlist.name}"? This cannot be undone.`, 
-      {
-        okText: "Delete",
-        danger: true,
-      }
+      `Delete the playlist "${playlist.name}"? This cannot be undone.`,
+      { okText: "Delete", danger: true }
     );
-    
     if (!confirmed) return false;
-    
-    const playlistName = playlist.name;
     appState.playlists = appState.playlists.filter((p) => p.id !== playlistId);
     storage.save(STORAGE_KEYS.PLAYLISTS, appState.playlists);
-    notifications.show(`Deleted playlist "${playlistName}"`, NOTIFICATION_TYPES.INFO);
-    
+    notifications.show(`Deleted playlist "${playlist.name}"`, NOTIFICATION_TYPES.INFO);
     return true;
   },
 
   create: async () => {
-    const name = await overlays.form.prompt(
-      "Enter playlist name:", 
-      {
-        okText: "Create",
-        placeholder: "My playlist",
-      }
-    );
-    
+    const name = await overlays.form.prompt("Enter playlist name:", {
+      okText: "Create",
+      placeholder: "My playlist",
+    });
     if (name) return playlists.add(name);
     return null;
   },
@@ -2056,71 +2027,48 @@ export const playlists = {
     if (appState.playlists.length === 0) {
       overlays.viewer.playlists(
         views.renderEmptyState(
-          "No Playlists", 
-          "You haven't created any playlists yet.", 
+          "No Playlists",
+          "You haven't created any playlists yet.",
           "Create your first playlist to organize your music."
         )
       );
       return;
     }
-
     const content = `
-      <div class="playlists-page animate__animated animate__fadeIn">
-        <div class="page-header mb-8 flex justify-between items-center">
+      <div class="playlist-modal__outer">
+        <header class="playlist-modal__header">
           <div>
-            <h1 class="text-3xl font-bold mb-2">Your Playlists</h1>
-            <p class="text-gray-400">${appState.playlists.length} playlist${appState.playlists.length !== 1 ? "s" : ""}</p>
+            <h1 class="playlist-modal__title">Your Playlists</h1>
+            <span class="playlist-modal__subtitle">${appState.playlists.length} playlist${appState.playlists.length !== 1 ? "s" : ""}</span>
           </div>
-          <button class="create-playlist-btn bg-accent-primary text-white px-6 py-3 rounded-full hover:bg-accent-secondary transition-colors flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-            </svg>
+          <button class="playlist-modal__createbtn">
+            <span class="iconify" data-icon="mdi:plus"></span>
             Create Playlist
           </button>
-        </div>
-
-        <div class="playlists-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          ${appState.playlists
-            .map(
-              (playlist, index) => `
-            <div class="playlist-card bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-700 transition-colors cursor-pointer" style="animation-delay: ${index * 100}ms;" data-playlist-id="${playlist.id}">
-              <div class="playlist-cover aspect-square bg-gradient-to-br from-purple-500 to-blue-600 relative">
-                <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" class="w-16 h-16">
-                    <path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v2H3v-2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"/>
-                  </svg>
-                </div>
-                <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button class="play-playlist-btn w-10 h-10 bg-accent-primary rounded-full flex items-center justify-center hover:scale-110 transition-transform" data-playlist-id="${playlist.id}">
-                    ${ICONS.play}
-                  </button>
-                </div>
+        </header>
+        <div class="playlist-modal__grid">
+          ${appState.playlists.map((playlist, i) => `
+            <div class="playlist-card" data-playlist-id="${playlist.id}" style="animation-delay:${i * 55}ms">
+              <div class="playlist-card__cover">
+                <img src="${playlist.cover || '/assets/playlist_cover.svg'}" alt="Playlist cover" class="playlist-card__img">
+                <button class="playlist-card__playbtn" data-playlist-id="${playlist.id}"><span class="iconify" data-icon="mdi:play"></span></button>
               </div>
-              <div class="p-4">
-                <h3 class="font-bold text-lg mb-1 truncate">${playlist.name}</h3>
-                <p class="text-gray-400 text-sm mb-3">${playlist.songs.length} song${playlist.songs.length !== 1 ? "s" : ""}</p>
-                <div class="flex gap-2">
-                  <button class="view-playlist-btn flex-1 bg-gray-600 text-white px-3 py-2 rounded hover:bg-gray-500 transition-colors text-sm" data-playlist-id="${playlist.id}">
-                    View
-                  </button>
-                  <button class="delete-playlist-btn px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors" data-playlist-id="${playlist.id}">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
-                      <path fill-rule="evenodd" d="M16.5 4.478v.227a48.816 48.816 0 013.878.512.75.75 0 11-.256 1.478l-.209-.035-1.005 13.07a3 3 0 01-2.991 2.77H8.084a3 3 0 01-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 01-.256-1.478A48.567 48.567 0 017.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 013.369 0c1.603.051 2.815 1.387 2.815 2.951zm-6.136-1.452a51.196 51.196 0 013.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 00-6 0v-.113c0-.794.609-1.428 1.364-1.452zm-.355 5.945a.75.75 0 10-1.5.058l.347 9a.75.75 0 101.499-.058l-.346-9zm5.48.058a.75.75 0 10-1.498-.058l-.347 9a.75.75 0 001.5.058l.345-9z" clip-rule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
+              <div class="playlist-card__info">
+                <h2 class="playlist-card__name">${playlist.name}</h2>
+                <span class="playlist-card__songs">${playlist.songs.length} song${playlist.songs.length !== 1 ? "s" : ""}</span>
               </div>
-            </div>
-          `
-            )
-            .join("")}
+              <div class="playlist-card__actions">
+                <button class="playlist-card__viewbtn" data-playlist-id="${playlist.id}">View</button>
+                <button class="playlist-card__deletebtn" data-playlist-id="${playlist.id}">
+                  <span class="iconify" data-icon="mdi:trash-can-outline"></span>
+                </button>
+              </div>
+            </div>`).join("")}
         </div>
       </div>
     `;
-
     overlays.viewer.playlists(content);
-    const modalEl = document.getElementById("playlist-viewer");
-    playlists.bindEvents(modalEl);
+    playlists.bindEvents(document.getElementById("playlist-viewer"));
   },
 
   show: (playlistId) => {
@@ -2129,281 +2077,169 @@ export const playlists = {
       notifications.show("Playlist not found", NOTIFICATION_TYPES.ERROR);
       return;
     }
-
     pageLoader.start({ message: "Loading playlist..." });
-
     setTimeout(() => {
       const dynamicContent = $byId(IDS.dynamicContent);
       if (!dynamicContent) return;
-
       dynamicContent.innerHTML = `
-        <div class="playlist-page animate__animated animate__fadeIn">
-          <div class="playlist-header mb-8 flex items-start gap-6">
-            <div class="playlist-cover w-48 h-48 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" class="w-24 h-24">
-                <path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v2H3v-2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"/>
-              </svg>
+        <section class="playlist-detail__root">
+          <header class="playlist-detail__header">
+            <div class="playlist-detail__cover">
+              <img src="${playlist.cover || '/assets/playlist_cover.svg'}" alt="" class="playlist-detail__img">
             </div>
-            <div class="playlist-info flex-1">
-              <p class="text-sm text-gray-400 mb-2">PLAYLIST</p>
-              <h1 class="text-4xl font-bold mb-4">${playlist.name}</h1>
-              <p class="text-gray-400 mb-6">${playlist.songs.length} song${playlist.songs.length !== 1 ? "s" : ""} • Created ${new Date(playlist.created).toLocaleDateString()}</p>
-              <div class="flex gap-4">
-                <button class="play-playlist-btn bg-accent-primary text-white px-8 py-3 rounded-full hover:bg-accent-secondary transition-colors flex items-center gap-2" data-playlist-id="${playlist.id}" ${
-        playlist.songs.length === 0 ? "disabled" : ""
-      }>
-                  ${ICONS.play}
+            <div class="playlist-detail__info">
+              <span class="playlist-detail__label">PLAYLIST</span>
+              <h1 class="playlist-detail__title">${playlist.name}</h1>
+              <span class="playlist-detail__details">${playlist.songs.length} song${playlist.songs.length !== 1 ? "s" : ""} • Created ${new Date(playlist.created).toLocaleDateString()}</span>
+              <div class="playlist-detail__controls">
+                <button class="playlist-detail__playbtn" data-playlist-id="${playlist.id}" ${playlist.songs.length === 0 ? "disabled" : ""}>
+                  <span class="iconify" data-icon="mdi:play"></span>
                   Play
                 </button>
-                <button class="edit-playlist-btn bg-gray-600 text-white px-6 py-3 rounded-full hover:bg-gray-500 transition-colors" data-playlist-id="${playlist.id}">
-                  Edit
-                </button>
-                <button class="delete-playlist-btn bg-red-600 text-white px-6 py-3 rounded-full hover:bg-red-700 transition-colors" data-playlist-id="${playlist.id}">
-                  Delete
-                </button>
+                <button class="playlist-detail__editbtn" data-playlist-id="${playlist.id}">Edit</button>
+                <button class="playlist-detail__deletebtn" data-playlist-id="${playlist.id}">Delete</button>
               </div>
             </div>
-          </div>
-          
+          </header>
           ${
             playlist.songs.length === 0
-              ? `
-            <div class="empty-playlist text-center py-12">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-16 h-16 mx-auto mb-4 text-gray-600">
-                <path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v2H3v-2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"/>
-              </svg>
-              <h3 class="text-xl font-bold mb-2">This playlist is empty</h3>
-              <p class="text-gray-400 mb-4">Add songs to start building your playlist</p>
-              <button class="browse-music-btn bg-accent-primary text-white px-6 py-2 rounded-full hover:bg-accent-secondary transition-colors">
-                Browse Music
-              </button>
-            </div>
-          `
-              : `
-            <div class="songs-list">
-              <div class="songs-header grid grid-cols-12 gap-4 px-4 py-2 text-sm text-gray-400 border-b border-gray-700 mb-2">
-                <div class="col-span-1">#</div>
-                <div class="col-span-5">Title</div>
-                <div class="col-span-3 hidden md:block">Album</div>
-                <div class="col-span-2 hidden md:block">Date Added</div>
-                <div class="col-span-1">Duration</div>
-              </div>
-              ${playlist.songs
-                .map(
-                  (song, index) => `
-                <div class="song-row grid grid-cols-12 gap-4 items-center px-4 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group" data-song='${JSON.stringify(song).replace(/"/g, "&quot;")}' data-playlist-id="${
-                    playlist.id
-                  }" data-song-index="${index}">
-                  <div class="col-span-1 text-gray-400 group-hover:hidden">${index + 1}</div>
-                  <div class="col-span-1 hidden group-hover:block">
-                    <button class="play-song-btn w-8 h-8 bg-accent-primary rounded-full flex items-center justify-center hover:scale-110 transition-transform">
-                      ${ICONS.play}
-                    </button>
-                  </div>
-                  <div class="col-span-5 flex items-center gap-3">
-                    <img src="${helpers.getAlbumImageUrl(song.album)}" alt="${song.title}" class="w-10 h-10 rounded object-cover">
-                    <div>
-                      <div class="font-medium">${song.title}</div>
-                      <div class="text-sm text-gray-400 cursor-pointer hover:text-white transition-colors" data-artist="${song.artist}">${song.artist}</div>
+              ? `<div class="playlist-detail__empty">
+                    <div class="playlist-detail__emptyicon">
+                      <span class="iconify" data-icon="mdi:playlist-music-outline"></span>
                     </div>
+                    <h3 class="playlist-detail__emptymain">This playlist is empty</h3>
+                    <span class="playlist-detail__emptysub">Add songs to start building your playlist</span>
+                    <button class="playlist-detail__browsebtn">Browse Music</button>
+                </div>`
+              : `<div class="playlist-detail__songs">
+                  <div class="playlist-detail__tablehead">
+                    <span>#</span><span>Title</span><span class="playlist-detail__album">Album</span><span class="playlist-detail__added">Date Added</span><span>Duration</span>
                   </div>
-                  <div class="col-span-3 hidden md:block text-gray-400 text-sm">${song.album}</div>
-                  <div class="col-span-2 hidden md:block text-gray-400 text-sm">${new Date().toLocaleDateString()}</div>
-                  <div class="col-span-1 flex items-center justify-between">
-                    <span class="text-gray-400 text-sm">${song.duration || "0:00"}</span>
-                    <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                      <button class="action-btn p-1 hover:bg-white/10 rounded transition-colors" data-action="favorite" data-song-id="${song.id}" title="Add to favorites">
-                        <svg class="w-4 h-4 ${appState.favorites.has("songs", song.id) ? "text-red-500" : ""}" fill="${appState.favorites.has("songs", song.id) ? "currentColor" : "none"}" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                        </svg>
-                      </button>
-                      <button class="action-btn p-1 hover:bg-white/10 rounded transition-colors" data-action="add-queue" title="Add to queue">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                        </svg>
-                      </button>
-                      <button class="action-btn p-1 hover:bg-white/10 rounded transition-colors" data-action="remove-from-playlist" title="Remove from playlist">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              `
-                )
-                .join("")}
-            </div>
-          `
+                  ${playlist.songs.map((song, idx) => `
+                    <div class="playlist-song__row" 
+                      data-song='${JSON.stringify(song).replace(/"/g, "&quot;")}' 
+                      data-playlist-id="${playlist.id}" 
+                      data-song-index="${idx}">
+                      <span class="playlist-song__idx">${idx + 1}</span>
+                      <button class="playlist-song__playbtn"><span class="iconify" data-icon="mdi:play"></span></button>
+                      <span class="playlist-song__title">
+                        <img src="${helpers.getAlbumImageUrl(song.album)}" class="playlist-song__thumbnail" />
+                        <span class="playlist-song__songtext">${song.title}</span>
+                        <span class="playlist-song__artist" data-artist="${song.artist}">${song.artist}</span>
+                      </span>
+                      <span class="playlist-song__album">${song.album}</span>
+                      <span class="playlist-song__added">${new Date().toLocaleDateString()}</span>
+                      <span class="playlist-song__duration">${song.duration || "0:00"}</span>
+                      <span class="playlist-song__actions">
+                        <button class="playlist-song__favoritebtn ${appState.favorites.has("songs", song.id) ? "active" : ""}" title="Favorite">
+                          <span class="iconify" data-icon="mdi:heart-outline"></span>
+                        </button>
+                        <button class="playlist-song__queuebtn" title="Add to queue">
+                          <span class="iconify" data-icon="mdi:playlist-plus"></span>
+                        </button>
+                        <button class="playlist-song__removebtn" title="Remove from playlist">
+                          <span class="iconify" data-icon="mdi:close"></span>
+                        </button>
+                      </span>
+                    </div>`).join("")}
+                </div>`
           }
-        </div>
+        </section>
       `;
-
       playlists.bindViewEvents(playlist);
       pageLoader.complete();
-    }, 200);
+    }, 180);
   },
 
   bindEvents: (root = $byId(IDS.dynamicContent)) => {
-    const dynamicContent = root;
-    if (!dynamicContent) return;
-
-    const createBtn = dynamicContent.querySelector(".create-playlist-btn");
-    if (createBtn) {
-      createBtn.addEventListener("click", async () => {
-        const newPlaylist = await playlists.create();
-        if (newPlaylist) {
-          setTimeout(() => playlists.showAll(), 100);
-        }
-      });
-    }
-
-    dynamicContent.querySelectorAll(".view-playlist-btn").forEach((btn) => {
+    if (!root) return;
+    root.querySelector(".playlist-modal__createbtn")?.addEventListener("click", async () => {
+      const playlist = await playlists.create();
+      if (playlist) setTimeout(playlists.showAll, 90);
+    });
+    root.querySelectorAll(".playlist-card__viewbtn").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
-        const playlistId = btn.dataset.playlistId;
-        playlists.show(playlistId);
+        playlists.show(btn.dataset.playlistId);
       });
     });
-
-    dynamicContent.querySelectorAll(".play-playlist-btn").forEach((btn) => {
+    root.querySelectorAll(".playlist-card__playbtn").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
-        const playlistId = btn.dataset.playlistId;
-        playlists.play(playlistId);
+        playlists.play(btn.dataset.playlistId);
       });
     });
-
-    dynamicContent.querySelectorAll(".delete-playlist-btn").forEach((btn) => {
+    root.querySelectorAll(".playlist-card__deletebtn").forEach((btn) => {
       btn.addEventListener("click", async (e) => {
         e.stopPropagation();
-        const playlistId = btn.dataset.playlistId;
-        if (await playlists.remove(playlistId)) {
-          setTimeout(() => playlists.showAll(), 100);
-        }
+        if (await playlists.remove(btn.dataset.playlistId)) setTimeout(playlists.showAll, 80);
       });
     });
-
-    dynamicContent.querySelectorAll(".playlist-card").forEach((card) => {
-      card.addEventListener("click", () => {
-        const playlistId = card.dataset.playlistId;
-        playlists.show(playlistId);
-      });
+    root.querySelectorAll(".playlist-card").forEach((card) => {
+      card.addEventListener("click", () => playlists.show(card.dataset.playlistId));
     });
   },
 
   bindViewEvents: (playlist) => {
     const dynamicContent = $byId(IDS.dynamicContent);
     if (!dynamicContent) return;
-
-    const playBtn = dynamicContent.querySelector(".play-playlist-btn");
-    if (playBtn) {
-      playBtn.addEventListener("click", () => {
-        playlists.play(playlist.id);
+    dynamicContent.querySelector(".playlist-detail__playbtn")?.addEventListener("click", () => playlists.play(playlist.id));
+    dynamicContent.querySelector(".playlist-detail__editbtn")?.addEventListener("click", async () => {
+      const newName = await overlays.form.prompt("Enter new playlist name:", {
+        okText: "Rename", value: playlist.name
       });
-    }
-
-    const editBtn = dynamicContent.querySelector(".edit-playlist-btn");
-    if (editBtn) {
-      editBtn.addEventListener("click", async () => {
-        const newName = await overlays.form.prompt(
-          "Enter new playlist name:",
-          {
-            okText: "Rename",
-            placeholder: "Playlist name",
-            value: playlist.name
-          }
-        );
-        
-        if (newName && newName.trim() && newName.trim() !== playlist.name) {
-          playlist.name = newName.trim();
-          storage.save(STORAGE_KEYS.PLAYLISTS, appState.playlists);
-          playlists.show(playlist.id);
-          notifications.show("Playlist renamed successfully", NOTIFICATION_TYPES.SUCCESS);
-        }
-      });
-    }
-
-    const deleteBtn = dynamicContent.querySelector(".delete-playlist-btn");
-    if (deleteBtn) {
-      deleteBtn.addEventListener("click", async () => {
-        if (await playlists.remove(playlist.id)) {
-          if (appState.router) {
-            appState.router.navigateTo(ROUTES.HOME);
-          }
-        }
-      });
-    }
-
-    const browseBtn = dynamicContent.querySelector(".browse-music-btn");
-    if (browseBtn) {
-      browseBtn.addEventListener("click", () => {
-        if (appState.router) {
-          appState.router.navigateTo(ROUTES.HOME);
-        }
-      });
-    }
-
-    dynamicContent.querySelectorAll(".song-row").forEach((row) => {
+      if (newName && newName.trim() && newName.trim() !== playlist.name) {
+        playlist.name = newName.trim();
+        storage.save(STORAGE_KEYS.PLAYLISTS, appState.playlists);
+        playlists.show(playlist.id);
+        notifications.show("Playlist renamed successfully", NOTIFICATION_TYPES.SUCCESS);
+      }
+    });
+    dynamicContent.querySelector(".playlist-detail__deletebtn")?.addEventListener("click", async () => {
+      if (await playlists.remove(playlist.id)) appState.router?.navigateTo(ROUTES.HOME);
+    });
+    dynamicContent.querySelector(".playlist-detail__browsebtn")?.addEventListener("click", () => appState.router?.navigateTo(ROUTES.HOME));
+    dynamicContent.querySelectorAll(".playlist-song__row").forEach((row) => {
       row.addEventListener("click", (e) => {
-        if (e.target.closest(".action-btn") || e.target.closest(".play-song-btn")) return;
-
-        try {
-          const songData = JSON.parse(row.dataset.song);
-          musicPlayer.ui.playSong(songData);
-        } catch (error) {}
+        if (e.target.closest(".playlist-song__actions") || e.target.closest(".playlist-song__playbtn")) return;
+        try { musicPlayer.ui.playSong(JSON.parse(row.dataset.song)); } catch {}
       });
     });
-
-    dynamicContent.querySelectorAll(".play-song-btn").forEach((btn) => {
+    dynamicContent.querySelectorAll(".playlist-song__playbtn").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
-        const songRow = btn.closest(".song-row");
-        try {
-          const songData = JSON.parse(songRow.dataset.song);
-          musicPlayer.ui.playSong(songData);
-        } catch (error) {}
+        const row = btn.closest(".playlist-song__row");
+        try { musicPlayer.ui.playSong(JSON.parse(row.dataset.song)); } catch {}
       });
     });
-
-    dynamicContent.querySelectorAll("[data-artist]").forEach((artistEl) => {
-      artistEl.addEventListener("click", (e) => {
+    dynamicContent.querySelectorAll(".playlist-song__artist").forEach((el) => {
+      el.addEventListener("click", (e) => {
         e.stopPropagation();
-        const artistName = artistEl.dataset.artist;
-        if (appState.router) {
-          appState.router.navigateTo(ROUTES.ARTIST, {
-            artist: artistName,
-          });
-        }
+        appState.router?.navigateTo(ROUTES.ARTIST, { artist: el.dataset.artist });
       });
     });
-
-    dynamicContent.querySelectorAll(".action-btn").forEach((btn) => {
+    dynamicContent.querySelectorAll(".playlist-song__favoritebtn").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
-        const action = btn.dataset.action;
-        const songRow = btn.closest(".song-row");
-        const songData = JSON.parse(songRow.dataset.song);
-
-        switch (action) {
-          case "favorite":
-            appState.favorites.toggle("songs", songData.id);
-            const heartIcon = btn.querySelector("svg");
-            const isFavorite = appState.favorites.has("songs", songData.id);
-            heartIcon.style.color = isFavorite ? "#ef4444" : "";
-            heartIcon.style.fill = isFavorite ? "currentColor" : "none";
-            break;
-          case "add-queue":
-            appState.queue.add(songData);
-            break;
-          case "remove-from-playlist":
-            const playlistId = songRow.dataset.playlistId;
-            const songIndex = parseInt(songRow.dataset.songIndex);
-            if (playlists.removeSong(playlistId, songData.id)) {
-              playlists.show(playlistId);
-            }
-            break;
-        }
+        const row = btn.closest(".playlist-song__row");
+        const song = JSON.parse(row.dataset.song);
+        appState.favorites.toggle("songs", song.id);
+        btn.classList.toggle("active", appState.favorites.has("songs", song.id));
+      });
+    });
+    dynamicContent.querySelectorAll(".playlist-song__queuebtn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const row = btn.closest(".playlist-song__row");
+        appState.queue.add(JSON.parse(row.dataset.song));
+      });
+    });
+    dynamicContent.querySelectorAll(".playlist-song__removebtn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const row = btn.closest(".playlist-song__row");
+        const song = JSON.parse(row.dataset.song);
+        if (playlists.removeSong(row.dataset.playlistId, song.id)) playlists.show(row.dataset.playlistId);
       });
     });
   },
