@@ -16,12 +16,8 @@ import { deepLinkRouter } from './router.js';
 
 
 export const escapeForAttribute = (str) => {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/'/g, '&#39;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 };
 
 
@@ -175,20 +171,26 @@ export const pageLoader = {
     const waitTime = Math.max(0, minDuration - elapsed);
 
     function finalize() {
-      pageLoader.bar.style.transform = 'scaleX(1)';
-      pageLoader.bar.classList.add('complete');
+      if (pageLoader.bar) {
+        pageLoader.bar.style.transform = 'scaleX(1)';
+        pageLoader.bar.classList.add('complete');
+      }
 
       if (pageLoader.contentContainer) {
         pageLoader.contentContainer.classList.remove('blur-active');
       }
 
       setTimeout(() => {
-        pageLoader.centerOverlay.classList.remove('active');
+        if (pageLoader.centerOverlay) {
+          pageLoader.centerOverlay.classList.remove('active');
+        }
       }, 100);
 
       setTimeout(() => {
-        pageLoader.bar.classList.remove('active', 'complete');
-        pageLoader.bar.style.opacity = '0';
+        if (pageLoader.bar) {
+          pageLoader.bar.classList.remove('active', 'complete');
+          pageLoader.bar.style.opacity = '0';
+        }
         pageLoader.isActive = false;
         pageLoader.clearTimers();
         
@@ -249,13 +251,22 @@ export const navigation = {
   initialize: () => {
     pageLoader.init();
     
-    appState.router = navigation.createRouter();
+    if (typeof navigation.createRouter === 'function') {
+      appState.router = navigation.createRouter();
+    } else {
+      console.error("navigation.createRouter is not a function");
+      return; // Stop initialization if router can't be created
+    }
     
     window.addEventListener("popstate", () => {
-      appState.router.handleRoute(window.location.pathname + window.location.search);
+      if (appState.router && typeof appState.router.handleRoute === 'function') {
+        appState.router.handleRoute(window.location.pathname + window.location.search);
+      }
     });
     
-    appState.router.handleInitialRoute();
+    if (appState.router && typeof appState.router.handleInitialRoute === 'function') {
+      appState.router.handleInitialRoute();
+    }
   },
 
 createRouter: () => {
@@ -425,11 +436,22 @@ createRouter: () => {
 
       dynamicContent.innerHTML = "";
 
-      setTimeout(() => {
-        navigation.rendering.renderArtistPage(artistData, targetAlbumName);
-        pageLoader.complete();
-        utils.scrollToTop();
-      }, 200);
+      // --- This try...catch block is critical ---
+      try {
+        setTimeout(() => {
+          navigation.rendering.renderArtistPage(artistData, targetAlbumName);
+          pageLoader.complete(); // This is the line that wasn't being reached
+          utils.scrollToTop();
+        }, 200);
+      } catch (e) {
+        console.error("CRITICAL ERROR during renderArtistPage:", e);
+        pageLoader.hide(); // Hide the loader immediately if an error occurs
+        navigation.pages.loadNotFoundPage({
+          title: "Render Error",
+          message: "Could not load this artist's page due to an unexpected error.",
+        });
+      }
+      // --- End try...catch block ---
     },
 
     loadAllArtistsPage: () => {
@@ -484,9 +506,12 @@ createRouter: () => {
       
       dynamicContent.innerHTML = html;
       
-      $byId('not-found-go-home').addEventListener('click', () => {
-        appState.router.navigateTo(ROUTES.HOME);
-      });
+      const goHomeBtn = $byId('not-found-go-home');
+      if (goHomeBtn) {
+        goHomeBtn.addEventListener('click', () => {
+          appState.router.navigateTo(ROUTES.HOME);
+        });
+      }
 
       pageUpdates.breadCrumbs(
         [
@@ -609,6 +634,7 @@ renderAlbumSongs: (albumContainer, album, artistName) => {
     return;
   }
 
+  // --- FIX: Initialize in-memory data store ---
   songsContainer._songsData = [];
 
   album.songs.forEach((song, index) => {
@@ -619,6 +645,7 @@ renderAlbumSongs: (albumContainer, album, artistName) => {
       cover: utils.getAlbumImageUrl(album.album),
     };
 
+    // --- FIX: Store data in memory ---
     songsContainer._songsData.push(songData);
 
     const isFavorite = appState.favorites.has("songs", song.id);
@@ -628,7 +655,7 @@ renderAlbumSongs: (albumContainer, album, artistName) => {
         title: song.title,
         artist: artistName,
         duration: song.duration || "0:00",
-        // songData: songData, // We no longer pass songData to render, it's stored in memory
+        songData: songData, // <-- THIS LINE IS THE FIX. It must be passed to the template.
         context: 'base',
         isFavorite: isFavorite,
         showTrackNumber: true,
@@ -851,24 +878,36 @@ renderAlbumSongs: (albumContainer, album, artistName) => {
       }
     },
 
+// --- FIX IS HERE ---
+// Reverted this function to use `songItem.dataset.song` for ALL actions,
+// which is consistent with the user's old, working code and `templates.js`.
 bindSongItemEvents: (container) => {
   if (!container) return;
 
   container.querySelectorAll(".song-item").forEach((songItem, itemIndex) => {
     let clickCount = 0;
     let clickTimer = null;
-
-    // Get the song data from the container's stored array
-    const songsContainer = songItem.closest('.songs-container');
-    const songIndex = parseInt(songItem.dataset.index);
     
-    // Store song data in memory, not in HTML
-    if (!songsContainer._songsData) {
-      songsContainer._songsData = [];
+    // Attempt to parse song data once
+    let songData = null;
+    try {
+      // The `data-song` attribute is added by `render.songItem` in templates.js
+      songData = JSON.parse(songItem.dataset.song);
+    } catch (e) {
+      console.error("Failed to parse song data for item:", songItem, e);
+      return; // Skip this item if data is bad
+    }
+    
+    // Store in-memory (good practice, but we'll read from dataset for consistency)
+    const songsContainer = songItem.closest('.songs-container');
+    if (songsContainer && songsContainer._songsData && songItem.dataset.index) {
+       songsContainer._songsData[parseInt(songItem.dataset.index)] = songData;
     }
 
+    // Double-click/tap
     songItem.addEventListener("click", (e) => {
       if (e.target.closest(".song-actions") || e.target.closest("[data-action]")) return;
+      if (!songData) return;
 
       clickCount++;
       if (clickCount === 1) {
@@ -876,72 +915,65 @@ bindSongItemEvents: (container) => {
       } else if (clickCount === 2) {
         clearTimeout(clickTimer);
         clickCount = 0;
-        
-        // Get song data from memory instead of parsing JSON
-        const songData = songsContainer._songsData[songIndex];
-        if (songData) {
-          musicPlayer.ui.playSong(songData);
-        }
+        musicPlayer.ui.playSong(songData);
       }
     });
 
+    // Play button
     const playButton = songItem.querySelector("[data-action='play']");
     if (playButton) {
       playButton.addEventListener("click", (e) => {
         e.stopPropagation();
-        const songData = songsContainer._songsData[songIndex];
         if (songData) {
           musicPlayer.ui.playSong(songData);
         }
       });
     }
 
-        const artistElement = songItem.querySelector("[data-artist]");
-        if (artistElement) {
-          artistElement.addEventListener("click", (e) => {
-            e.stopPropagation();
-            const artistName = artistElement.dataset.artist;
-            appState.router.navigateToArtist(artistName);
-          });
-        }
-
-        // --- MODIFICATION START ---
-        // This logic was causing the error
-        songItem.querySelectorAll("[data-action]").forEach((actionBtn) => {
-          actionBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            const action = actionBtn.dataset.action;
-
-            // FIX: Get data from the in-memory _songsData array,
-            // not from songItem.dataset.song (which doesn't exist)
-            const songsContainer = actionBtn.closest('.songs-container');
-            const songItem = actionBtn.closest('.song-item');
-            
-            if (!songsContainer || !songItem) {
-                console.error('Could not find song container or item for action:', action);
-                return;
-            }
-            
-            const songIndex = parseInt(songItem.dataset.index);
-            const songData = songsContainer._songsData[songIndex];
-            const context = songItem.dataset.context || 'base';
-
-            if (!songData) {
-              console.error('Could not find song data for action:', action, songItem);
-              return;
-            }
-            // --- END OF FIX ---
-
-            if (action === 'more') {
-              navigation.actions.showMoreActionsPopover(actionBtn, songData, context);
-            } else {
-              navigation.actions.handleSongAction(action, songData, context);
-            }
-          });
-        });
-        // --- MODIFICATION END ---
+    // Artist link
+    const artistElement = songItem.querySelector("[data-artist]");
+    if (artistElement) {
+      artistElement.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const artistName = artistElement.dataset.artist;
+        appState.router.navigateToArtist(artistName);
       });
     }
+
+    // All other action buttons (more, favorite, add-queue, etc.)
+    songItem.querySelectorAll("[data-action]").forEach((actionBtn) => {
+      // Skip the play button we just handled
+      if (actionBtn.dataset.action === 'play') return;
+
+      actionBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        
+        // Re-read data just in case, but use the one from the loop
+        let currentSongData = songData;
+        if (!currentSongData) {
+            try {
+                currentSongData = JSON.parse(songItem.dataset.song);
+            } catch(err) {
+                 console.error("Could not get song data for action:", actionBtn.dataset.action, err);
+                 return;
+            }
+        }
+        
+        if (!currentSongData) return;
+
+        const action = actionBtn.dataset.action;
+        const context = songItem.dataset.context || 'base';
+
+        if (action === 'more') {
+          navigation.actions.showMoreActionsPopover(actionBtn, currentSongData, context);
+        } else {
+          navigation.actions.handleSongAction(action, currentSongData, context);
+        }
+      });
+    });
+  });
+}
+// --- END OF FIX ---
   },
 
   actions: {
@@ -1119,7 +1151,7 @@ bindSongItemEvents: (container) => {
     },
 
     showPlaylistSelector: (songData) => {
-      if (appState.playlists.length === 0) {
+      if (!appState.playlists || appState.playlists.length === 0) {
         overlays.dialog.confirm(
           "No playlists found. Create a new playlist?",
           { okText: "Create Playlist", cancelText: "Cancel" }
@@ -1173,25 +1205,27 @@ bindSongItemEvents: (container) => {
       
       const modal = document.getElementById('playlist-selector');
       
-      modal.querySelectorAll('.playlist-option').forEach(option => {
-        option.addEventListener('click', () => {
-          const playlistId = option.dataset.playlistId;
-          playlists.addSong(playlistId, songData);
+      if(modal) {
+        modal.querySelectorAll('.playlist-option').forEach(option => {
+          option.addEventListener('click', () => {
+            const playlistId = option.dataset.playlistId;
+            playlists.addSong(playlistId, songData);
+            overlays.close('playlist-selector');
+          });
+        });
+        
+        modal.querySelector('.create-new-playlist')?.addEventListener('click', async () => {
+          overlays.close('playlist-selector');
+          const newPlaylist = await playlists.create();
+          if (newPlaylist) {
+            playlists.addSong(newPlaylist.id, songData);
+          }
+        });
+        
+        modal.querySelector('.cancel-playlist-selection')?.addEventListener('click', () => {
           overlays.close('playlist-selector');
         });
-      });
-      
-      modal.querySelector('.create-new-playlist').addEventListener('click', async () => {
-        overlays.close('playlist-selector');
-        const newPlaylist = await playlists.create();
-        if (newPlaylist) {
-          playlists.addSong(newPlaylist.id, songData);
-        }
-      });
-      
-      modal.querySelector('.cancel-playlist-selection').addEventListener('click', () => {
-        overlays.close('playlist-selector');
-      });
+      }
     },
 
     shareSong: (songData) => {
