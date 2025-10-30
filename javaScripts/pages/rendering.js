@@ -260,49 +260,35 @@ export const navigation = {
 
 createRouter: () => {
   const router = {
-    // Helper to encode names (spaces to periods)
-    encodeName(name) {
-      return name.trim().replace(/\s+/g, '.');
-    },
-    // Helper to decode names (periods to spaces)
-    decodeName(segment) {
-      return segment.replace(/\./g, ' ');
-    },
+    // We get these from the deepLinkRouter
+    encodeName: deepLinkRouter.encodeName,
+    decodeName: deepLinkRouter.decodeName,
 
     routes: {},
 
     handleInitialRoute: function () {
       const path = window.location.pathname + window.location.search;
-      this.handleRoute(path);
+      // Let the deepLinkRouter handle the initial load
+      // this.handleRoute(path);
     },
 
     handleRoute: function (path) {
-      let matchedRoute = false;
-      for (const key in this.routes) {
-        const route = this.routes[key];
-        const match = path.match(route.pattern);
-        if (match) {
-          const params = {};
-          if (key === ROUTES.ARTIST) params.artist = router.decodeName(match[1]);
-          route.handler(params);
-          matchedRoute = true;
-          break;
-        }
-      }
-      if (!matchedRoute) navigation.pages.loadHomePage();
+      // This is now primarily handled by popstate events
+      const pathInfo = deepLinkRouter.parseCurrentPath();
+      deepLinkRouter.resolveRoute(pathInfo);
     },
 
     navigateTo: function (routeName, params = {}) {
-      let url;
-      switch (routeName) {
-        case ROUTES.HOME: url = "/"; break;
-        case ROUTES.ARTIST:
-          url = `/artist/${router.encodeName(params.artist)}`;
-          break;
-        case ROUTES.ALL_ARTISTS: url = "/artists"; break;
-        default: url = "/";
+      const url = deepLinkRouter.generateLink(routeName, params);
+      
+      // Check if we are already on this URL
+      if (window.location.pathname === url.replace(/\/$/, '')) {
+        // Even if URL is same, re-run handler to reload content
+        if (this.routes[routeName]) this.routes[routeName].handler(params);
+        return;
       }
-      window.history.pushState({}, "", url);
+      
+      window.history.pushState(params, "", url);
       if (this.routes[routeName]) this.routes[routeName].handler(params);
     },
 
@@ -310,14 +296,20 @@ createRouter: () => {
       this.navigateTo(ROUTES.ARTIST, { artist: artistName });
     },
 
-    openSearchDialog: () => {
-      notifications.show("Search functionality coming soon");
+    openSearchDialog: (query = '') => {
+      if (window.musicSearch) {
+        window.musicSearch.openSearch(query);
+      }
     },
 
-    closeSearchDialog: () => { }
+    closeSearchDialog: () => {
+      if (window.musicSearch) {
+        window.musicSearch.closeSearch();
+      }
+    }
   };
 
-  // Now define the routes using `router` variable so helpers are always accessible
+  // Define the routes
   router.routes = {
     [ROUTES.HOME]: {
       pattern: /^\/$/,
@@ -326,14 +318,42 @@ createRouter: () => {
     [ROUTES.ARTIST]: {
       pattern: /^\/artist\/(.+)$/,
       handler: (params) => {
-        // Use router.decodeName instead of this.decodeName
-        const artistName = params.artist || utils.getParameterByName("artist", window.location.href);
-        const decodedArtistName = artistName ? router.decodeName(artistName) : '';
-        const artistData = window.music?.find(a => a.artist === decodedArtistName);
+        const artistName = params.artist;
+        const artistData = window.music?.find(a => a.artist === artistName);
+        
         if (artistData) {
-          navigation.pages.loadArtistPage(artistData);
+          // Check for a pending album load from session storage (set by deep link)
+          const pendingAlbum = sessionStorage.getItem('pendingAlbumLoad');
+          sessionStorage.removeItem('pendingAlbumLoad');
+          navigation.pages.loadArtistPage(artistData, pendingAlbum || null);
         } else {
-          appState.router.navigateTo(ROUTES.HOME);
+          // --- MODIFIED ---
+          // Artist not found, show 404 page
+          navigation.pages.loadNotFoundPage({
+            title: 'Artist Not Found',
+            message: `We couldn't find an artist named "${artistName}".`,
+          });
+          // --- END MODIFIED ---
+        }
+      },
+    },
+    [ROUTES.ALBUM]: {
+      pattern: /^\/album\/(.+)\/(.+)$/,
+      handler: (params) => {
+        const artistName = params.artist;
+        const albumName = params.album;
+        const artistData = window.music?.find(a => a.artist === artistName);
+        
+        if (artistData) {
+          navigation.pages.loadArtistPage(artistData, albumName);
+        } else {
+          // --- MODIFIED ---
+          // Artist not found, show 404 page
+          navigation.pages.loadNotFoundPage({
+            title: 'Artist Not Found',
+            message: `We couldn't find an artist named "${artistName}".`,
+          });
+          // --- END MODIFIED ---
         }
       },
     },
@@ -346,22 +366,20 @@ createRouter: () => {
   return router;
 },
 
-
-
-isValidRoute: (routeName, params = {}) => {
-  switch (routeName) {
-    case ROUTES.HOME:
-    case ROUTES.ALL_ARTISTS:
-      return true;
-      
-    case ROUTES.ARTIST:
-      if (!params.artist || !window.music) return false;
-      return window.music.some(a => a.artist === params.artist);
-      
-    default:
-      return false;
-  }
-},
+  isValidRoute: (routeName, params = {}) => {
+    switch (routeName) {
+      case ROUTES.HOME:
+      case ROUTES.ALL_ARTISTS:
+        return true;
+        
+      case ROUTES.ARTIST:
+        if (!params.artist || !window.music) return false;
+        return window.music.some(a => a.artist === params.artist);
+        
+      default:
+        return false;
+    }
+  },
 
   pages: {
     loadHomePage: () => {
@@ -433,7 +451,68 @@ isValidRoute: (routeName, params = {}) => {
           pageLoader.complete();
         }, 100);
       }, 300);
+    },
+    
+    // --- NEW 404 PAGE FUNCTION ---
+    loadNotFoundPage: (error = {}) => {
+      pageLoader.start({ message: "Page not found..." });
+      
+      const title = error.title || 'Page Not Found';
+      const message = error.message || "The page you're looking for doesn't exist or has been moved.";
+
+      const dynamicContent = $byId(IDS.dynamicContent);
+      if (!dynamicContent) return;
+
+      dynamicContent.innerHTML = "";
+      
+      // We must wrap the card in a .bento-grid to reuse the styles
+      const html = `
+        <div class="bento-grid" style="grid-template-columns: 1fr; max-width: 600px; margin: 2rem auto;">
+          <div class="bento-card">
+            <div class="card-header">
+              <h2 class="card-title" style="color: var(--accent-danger, #ef4444);">
+                <svg viewBox="0 0 20 20" fill="currentColor" style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem; transform: translateY(-2px);">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                404 - ${title}
+              </h2>
+            </div>
+            <div class="card-content" style="min-height: auto; padding-bottom: 1rem;">
+              <p style="color: var(--text-200); margin-bottom: 1.5rem;">${message}</p>
+              <button class="btn btn-primary" id="not-found-go-home">
+                Go to Home
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      dynamicContent.innerHTML = html;
+      
+      $byId('not-found-go-home').addEventListener('click', () => {
+        appState.router.navigateTo(ROUTES.HOME);
+      });
+
+      pageUpdates.breadCrumbs(
+        [
+          { 
+            text: "Home", 
+            route: ROUTES.HOME, 
+            active: false, 
+            isHome: true
+          },
+          { 
+            text: "404 Not Found", 
+            active: true 
+          }
+        ],
+        { showIcons: true }
+      );
+      
+      pageLoader.complete();
+      utils.scrollToTop();
     }
+    // --- END NEW 404 PAGE FUNCTION ---
   },
 
   rendering: {
@@ -487,6 +566,15 @@ isValidRoute: (routeName, params = {}) => {
         const index = artistData.albums.findIndex(album => album.album === targetAlbumName);
         if (index !== -1) {
           targetAlbumIndex = index;
+        } else {
+          // --- MODIFIED ---
+          // Album not found, show 404
+          navigation.pages.loadNotFoundPage({
+            title: 'Album Not Found',
+            message: `We couldn't find the album "${targetAlbumName}" for ${artistData.artist}.`,
+          });
+          return; // Stop rendering the album section
+          // --- END MODIFIED ---
         }
       }
 
@@ -1121,7 +1209,3 @@ bindSongItemEvents: (container) => {
     }
   }
 };
-
-
-
-
