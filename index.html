@@ -101,6 +101,38 @@ MyBeats:  Stream & share your favorite music for free.
 
 
 <style>
+/*
+Add this to your styleSheets/main.css file
+*/
+
+/* 1. Active Link Styling */
+.dropdown-item.active {
+  background: var(--accent-primary, #1f6feb);
+  border-color: var(--border-accent, #1f6feb) !important; /* Use !important to override inline styles if needed */
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md);
+}
+
+.dropdown-item.active .dropdown-item-icon {
+  background: transparent;
+  color: var(--text-on-accent, #ffffff);
+}
+
+.dropdown-item.active .dropdown-item-title {
+  color: var(--text-on-accent, #ffffff);
+}
+
+.dropdown-item.active .dropdown-item-subtitle {
+  color: var(--text-on-accent, #ffffff);
+  opacity: 0.8;
+}
+
+
+
+
+
+
+
 :root {
   --accent-primary: #6366fa;
   --accent-secondary: #9c6cf4;
