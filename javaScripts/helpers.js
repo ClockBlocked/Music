@@ -14,12 +14,17 @@ export const helpers = {
   // Image URL generation
   getAlbumImageUrl: function(albumName) {
     if (!albumName) return helpers.getDefaultAlbumImage();
-    return `https://raw.githubusercontent.com/ClockBlocked/ClockBlocked.github.io/refs/heads/Finalfinal/global/content/images/albumCovers/${albumName.toLowerCase().replace(/\s+/g, '')}.png`;
+    const cleanName = albumName
+      .toLowerCase()
+      .replace(/\s+/g, "")
+      .replace(/[^\w.-]/g, ""); // Allow periods and hyphens
+    return `https://raw.githubusercontent.com/ClockBlocked/ClockBlocked.github.io/refs/heads/Finalfinal/global/content/images/albumCovers/${cleanName}.png`;
   },
 
   getArtistImageUrl: function(artistName) {
     if (!artistName) return helpers.getDefaultArtistImage();
     const normalizedName = helpers.normalizeNameForUrl(artistName);
+     // Use the existing normalization function
     return `https://raw.githubusercontent.com/ClockBlocked/ClockBlocked.github.io/refs/heads/Finalfinal/global/content/images/artistPortraits/${normalizedName}.png`;
   },
 
@@ -33,15 +38,17 @@ export const helpers = {
 
   // URL normalization
   normalizeNameForUrl: function(name) {
+    if (typeof name !== 'string') return '';
     return name
       .toLowerCase()
       .trim()
-      .replace(/[^\w\s]/g, '')
-      .replace(/\s+/g, '')
-      .replace(/[^a-z0-9]/g, '');
+      .replace(/[^\w\s]/g, '') // Remove non-word characters (except space)
+      .replace(/\s+/g, '') // Remove spaces
+      .replace(/[^a-z0-9]/g, ''); // Final cleanup for any lingering non-alphanumeric
   },
 
   normalizeForUrl: function(text) {
+    if (typeof text !== 'string') return '';
     return text
       .toString()
       .toLowerCase()
@@ -104,8 +111,39 @@ export const helpers = {
 
   // Music data helpers
   getTotalSongs: function(artist) {
-    return artist.albums.reduce((total, album) => total + album.songs.length, 0);
+    if (!artist || !artist.albums) return 0;
+    return artist.albums.reduce((total, album) => total + (album.songs ? album.songs.length : 0), 0);
   },
+
+  // --- NEW FUNCTION START ---
+  /**
+   * Finds artists with the same genre.
+   * @param {string} currentArtistName - The name of the artist to compare against.
+   * @param {object} [options={ limit: 24 }] - Options, including the max number of artists to return.
+   * @returns {string[]} An array of similar artist names.
+   */
+  getSimilarArtists: function(currentArtistName, options = { limit: 24 }) {
+    const { limit } = options;
+    if (!window.music || !currentArtistName) return [];
+
+    const currentArtist = window.music.find(a => a.artist === currentArtistName);
+    if (!currentArtist || !currentArtist.genre) return [];
+
+    const currentGenre = currentArtist.genre.toLowerCase();
+    
+    const similar = window.music.filter(artist => 
+      artist.artist !== currentArtistName &&
+      artist.genre &&
+      artist.genre.toLowerCase() === currentGenre
+    );
+
+    // Shuffle and slice the results
+    return similar
+      .map(artist => artist.artist)
+      .sort(() => 0.5 - Math.random()) // Shuffle the array
+      .slice(0, limit); // Get the specified limit
+  },
+  // --- NEW FUNCTION END ---
 
   parseDuration: function(durationStr) {
     if (typeof durationStr !== "string") return 0;
@@ -209,10 +247,24 @@ export const helpers = {
     }
     
     return result;
-  }
+  },
+
+  // Added scrollToTop as it was in my previous (incorrect) version but not your file
+  scrollToTop: function (smooth = true) {
+    try {
+      window.scrollTo({
+        top: 0,
+        behavior: smooth ? "smooth" : "auto",
+      });
+    } catch (e) {
+      console.warn("Smooth scroll failed, falling back to instant.", e);
+      window.scrollTo(0, 0);
+    }
+  },
 };
 
 // Export individual functions for backward compatibility with existing code
+// (This part seems to be from your file, so I've kept it)
 export const formatTime = helpers.formatTime;
 export const getAlbumImageUrl = helpers.getAlbumImageUrl;
 export const getArtistImageUrl = helpers.getArtistImageUrl;
@@ -227,3 +279,6 @@ export const parseDuration = helpers.parseDuration;
 export const createElementFromHTML = helpers.createElementFromHTML;
 export const encodeURIComponent = helpers.encodeURIComponent;
 export const encodeURIComponentSimple = helpers.encodeURIComponentSimple;
+export const getSimilarArtists = helpers.getSimilarArtists; // Exporting the new function
+export const scrollToTop = helpers.scrollToTop; // Exporting the added function
+
