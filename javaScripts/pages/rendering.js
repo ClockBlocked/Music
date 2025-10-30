@@ -327,13 +327,11 @@ createRouter: () => {
           sessionStorage.removeItem('pendingAlbumLoad');
           navigation.pages.loadArtistPage(artistData, pendingAlbum || null);
         } else {
-          // --- MODIFIED ---
           // Artist not found, show 404 page
           navigation.pages.loadNotFoundPage({
             title: 'Artist Not Found',
             message: `We couldn't find an artist named "${artistName}".`,
           });
-          // --- END MODIFIED ---
         }
       },
     },
@@ -347,13 +345,11 @@ createRouter: () => {
         if (artistData) {
           navigation.pages.loadArtistPage(artistData, albumName);
         } else {
-          // --- MODIFIED ---
           // Artist not found, show 404 page
           navigation.pages.loadNotFoundPage({
             title: 'Artist Not Found',
             message: `We couldn't find an artist named "${artistName}".`,
           });
-          // --- END MODIFIED ---
         }
       },
     },
@@ -453,7 +449,6 @@ createRouter: () => {
       }, 300);
     },
     
-    // --- NEW 404 PAGE FUNCTION ---
     loadNotFoundPage: (error = {}) => {
       pageLoader.start({ message: "Page not found..." });
       
@@ -512,7 +507,6 @@ createRouter: () => {
       pageLoader.complete();
       utils.scrollToTop();
     }
-    // --- END NEW 404 PAGE FUNCTION ---
   },
 
   rendering: {
@@ -567,14 +561,12 @@ createRouter: () => {
         if (index !== -1) {
           targetAlbumIndex = index;
         } else {
-          // --- MODIFIED ---
           // Album not found, show 404
           navigation.pages.loadNotFoundPage({
             title: 'Album Not Found',
             message: `We couldn't find the album "${targetAlbumName}" for ${artistData.artist}.`,
           });
           return; // Stop rendering the album section
-          // --- END MODIFIED ---
         }
       }
 
@@ -636,7 +628,7 @@ renderAlbumSongs: (albumContainer, album, artistName) => {
         title: song.title,
         artist: artistName,
         duration: song.duration || "0:00",
-        songData: songData,
+        // songData: songData, // We no longer pass songData to render, it's stored in memory
         context: 'base',
         isFavorite: isFavorite,
         showTrackNumber: true,
@@ -913,12 +905,32 @@ bindSongItemEvents: (container) => {
           });
         }
 
+        // --- MODIFICATION START ---
+        // This logic was causing the error
         songItem.querySelectorAll("[data-action]").forEach((actionBtn) => {
           actionBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             const action = actionBtn.dataset.action;
-            const songData = JSON.parse(songItem.dataset.song);
+
+            // FIX: Get data from the in-memory _songsData array,
+            // not from songItem.dataset.song (which doesn't exist)
+            const songsContainer = actionBtn.closest('.songs-container');
+            const songItem = actionBtn.closest('.song-item');
+            
+            if (!songsContainer || !songItem) {
+                console.error('Could not find song container or item for action:', action);
+                return;
+            }
+            
+            const songIndex = parseInt(songItem.dataset.index);
+            const songData = songsContainer._songsData[songIndex];
             const context = songItem.dataset.context || 'base';
+
+            if (!songData) {
+              console.error('Could not find song data for action:', action, songItem);
+              return;
+            }
+            // --- END OF FIX ---
 
             if (action === 'more') {
               navigation.actions.showMoreActionsPopover(actionBtn, songData, context);
@@ -927,6 +939,7 @@ bindSongItemEvents: (container) => {
             }
           });
         });
+        // --- MODIFICATION END ---
       });
     }
   },
