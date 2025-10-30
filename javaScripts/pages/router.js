@@ -111,13 +111,11 @@ export const deepLinkRouter = {
       'search': () => this.navigateToSearch(params[0]),
     };
 
-    // --- MODIFIED ---
     // Use navigateToNotFound as the fallback
     const handler = routeHandlers[route] || (() => this.navigateToNotFound({
       title: 'Page Not Found',
       message: `The URL path "${pathInfo.fullPath}" does not correspond to any content.`,
     }));
-    // --- END MODIFIED ---
     
     return handler();
   },
@@ -128,7 +126,6 @@ export const deepLinkRouter = {
     }
   },
   
-  // --- NEW FUNCTION ---
   navigateToNotFound(error = {}) {
     if (window.navigation?.pages?.loadNotFoundPage) {
       window.navigation.pages.loadNotFoundPage(error);
@@ -137,7 +134,6 @@ export const deepLinkRouter = {
       this.navigateToHome();
     }
   },
-  // --- END NEW FUNCTION ---
 
   navigateToArtist(artistName) {
     if (!artistName) {
@@ -145,7 +141,6 @@ export const deepLinkRouter = {
       return;
     }
     
-    // --- MODIFIED ---
     // Check if artist exists before navigating
     const artistData = window.music?.find(a => a.artist === artistName);
     if (!artistData) {
@@ -155,7 +150,6 @@ export const deepLinkRouter = {
       });
       return;
     }
-    // --- END MODIFIED ---
 
     if (window.appState?.router) {
       window.appState.router.navigateTo(
@@ -173,12 +167,10 @@ export const deepLinkRouter = {
 
   navigateToAlbum(artistName, albumName) {
     if (!artistName || !albumName) {
-      // --- MODIFIED ---
       this.navigateToNotFound({
         title: 'Invalid URL',
         message: 'An artist and album name are required for this page.',
       });
-      // --- END MODIFIED ---
       return;
     }
 
@@ -188,7 +180,6 @@ export const deepLinkRouter = {
     if (window.appState?.router && window.music) {
       const artistData = window.music.find(a => a.artist === decodedArtist);
       
-      // --- MODIFIED ---
       if (artistData) {
         const albumData = artistData.albums.find(a => this.encodeName(a.album) === this.encodeName(decodedAlbum));
         
@@ -212,7 +203,6 @@ export const deepLinkRouter = {
           message: `We couldn't find an artist named "${decodedArtist}".`,
         });
       }
-      // --- END MODIFIED ---
     }
   },
 
