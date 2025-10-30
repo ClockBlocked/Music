@@ -181,6 +181,7 @@ export const deepLinkRouter = {
       const artistData = window.music.find(a => a.artist === decodedArtist);
       
       if (artistData) {
+        // Use encodeName to match encoded names in URLs
         const albumData = artistData.albums.find(a => this.encodeName(a.album) === this.encodeName(decodedAlbum));
         
         if (albumData && window.navigation?.pages?.loadArtistPage) {
@@ -239,35 +240,39 @@ export const deepLinkRouter = {
     }
   },
 
+  // --- MODIFICATION START ---
+  // This function is now responsible for handling ALL page loads,
+  // not just deep links.
   initialize() {
     if (window.deepLinkHandled) return;
     window.deepLinkHandled = true;
 
     const pathInfo = this.parseCurrentPath();
+    
+    // This console log will now fire on ALL page loads
+    console.log('Router initializing with path:', pathInfo);
 
-    // Check against basePath-relative path
-    if (pathInfo.fullPath !== this.basePath && pathInfo.fullPath !== `${this.basePath}/` && pathInfo.route && pathInfo.route !== 'home') {
-      console.log('Deep link detected:', pathInfo);
-
-      const checkInitialized = setInterval(() => {
-        if (window.appState?.router && window.music && window.navigation) {
-          clearInterval(checkInitialized);
-
-          setTimeout(() => {
-            this.resolveRoute(pathInfo);
-          }, 100);
-        }
-      }, 100);
-
-      setTimeout(() => {
+    const checkInitialized = setInterval(() => {
+      if (window.appState?.router && window.music && window.navigation) {
         clearInterval(checkInitialized);
-        if (!window.appState?.router) {
-          console.error('App not initialized after 5 seconds, redirecting to home');
-          window.location.href = this.basePath || '/';
-        }
-      }, 5000);
-    }
+
+        // We have all dependencies, resolve the current route,
+        // whether it's 'home' or a deep link.
+        setTimeout(() => {
+          this.resolveRoute(pathInfo);
+        }, 100); // Small delay to ensure all modules are fully ready
+      }
+    }, 100);
+
+    setTimeout(() => {
+      clearInterval(checkInitialized);
+      if (!window.appState?.router) {
+        console.error('App not initialized after 5 seconds, redirecting to home');
+        window.location.href = this.basePath || '/';
+      }
+    }, 5000);
   },
+  // --- MODIFICATION END ---
 
   bindPopState() {
     window.addEventListener('popstate', (event) => {
