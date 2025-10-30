@@ -2,13 +2,13 @@ export const deepLinkRouter = {
   basePath: '/Music', // Base path for the application
 
   // Helper to encode names (spaces to periods)
-  encodeName(name) {
+  encodeName: function(name) {
     if (typeof name !== 'string') return '';
     return name.trim().replace(/\s+/g, '.');
   },
 
   // Helper to decode names (periods to spaces)
-  decodeName(segment) {
+  decodeName: function(segment) {
     if (typeof segment !== 'string') return '';
     return segment.replace(/\./g, ' ');
   },
@@ -19,7 +19,7 @@ export const deepLinkRouter = {
    * @param {object} [params={}] - An object of parameters for the route.
    * @returns {string} The constructed URL.
    */
-  generateLink(routeName, params = {}) {
+  generateLink: function(routeName, params = {}) {
     let path = this.basePath;
 
     switch (routeName) {
@@ -71,7 +71,7 @@ export const deepLinkRouter = {
     return path.replace(/\/+/g, '/'); // Clean up double slashes
   },
 
-  parseCurrentPath() {
+  parseCurrentPath: function() {
     const path = window.location.pathname;
     
     // Make path relative to the basePath
@@ -92,7 +92,7 @@ export const deepLinkRouter = {
     };
   },
 
-  resolveRoute(pathInfo) {
+  resolveRoute: function(pathInfo) {
     const { route, params } = pathInfo;
 
     if (!window.appState?.router) {
@@ -120,13 +120,13 @@ export const deepLinkRouter = {
     return handler();
   },
 
-  navigateToHome() {
+  navigateToHome: function() {
     if (window.appState?.router) {
-      window.appState.router.navigateTo(window.ROUTES?.HOME || '/');
+      window.appState.router.navigateTo(window.ROUTES?.HOME || 'home'); // Use 'home' routeName
     }
   },
   
-  navigateToNotFound(error = {}) {
+  navigateToNotFound: function(error = {}) {
     if (window.navigation?.pages?.loadNotFoundPage) {
       window.navigation.pages.loadNotFoundPage(error);
     } else {
@@ -135,7 +135,7 @@ export const deepLinkRouter = {
     }
   },
 
-  navigateToArtist(artistName) {
+  navigateToArtist: function(artistName) {
     if (!artistName) {
       this.navigateToHome();
       return;
@@ -159,13 +159,13 @@ export const deepLinkRouter = {
     }
   },
 
-  navigateToAllArtists() {
+  navigateToAllArtists: function() {
     if (window.appState?.router) {
       window.appState.router.navigateTo(window.ROUTES?.ALL_ARTISTS || 'artists');
     }
   },
 
-  navigateToAlbum(artistName, albumName) {
+  navigateToAlbum: function(artistName, albumName) {
     if (!artistName || !albumName) {
       this.navigateToNotFound({
         title: 'Invalid URL',
@@ -207,7 +207,7 @@ export const deepLinkRouter = {
     }
   },
 
-  navigateToPlaylist(playlistId) {
+  navigateToPlaylist: function(playlistId) {
     if (!playlistId) {
       this.navigateToHome();
       return;
@@ -218,7 +218,7 @@ export const deepLinkRouter = {
     }
   },
 
-  navigateToFavorites(type) {
+  navigateToFavorites: function(type) {
     const favoriteType = type || 'songs';
 
     if (window.views) {
@@ -233,7 +233,7 @@ export const deepLinkRouter = {
     }
   },
 
-  navigateToSearch(query) {
+  navigateToSearch: function(query) {
     if (window.appState?.router && query) {
       const decodedQuery = query;
       window.appState.router.openSearchDialog?.(decodedQuery);
@@ -243,7 +243,7 @@ export const deepLinkRouter = {
   // --- MODIFICATION START ---
   // This function is now responsible for handling ALL page loads,
   // not just deep links.
-  initialize() {
+  initialize: function() {
     if (window.deepLinkHandled) return;
     window.deepLinkHandled = true;
 
@@ -253,6 +253,7 @@ export const deepLinkRouter = {
     console.log('Router initializing with path:', pathInfo);
 
     const checkInitialized = setInterval(() => {
+      // Wait for all critical modules to be ready
       if (window.appState?.router && window.music && window.navigation) {
         clearInterval(checkInitialized);
 
@@ -274,10 +275,11 @@ export const deepLinkRouter = {
   },
   // --- MODIFICATION END ---
 
-  bindPopState() {
+  bindPopState: function() {
     window.addEventListener('popstate', (event) => {
       const pathInfo = this.parseCurrentPath();
       this.resolveRoute(pathInfo);
     });
   },
 };
+
