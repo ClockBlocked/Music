@@ -100,6 +100,36 @@ export const pageUpdates = {
       list.appendChild(li);
     });
 
+    // --- NEW LOGIC START ---
+    // Update main navigation menu active state
+    try {
+      const activeItem = items.find(item => item.active);
+      const activeRoute = activeItem ? (activeItem.route || (activeItem.isHome ? 'home' : '')) : 'home';
+
+      // Clear active class from all dropdown items
+      const allNavItems = document.querySelectorAll('#dropdown-menu .dropdown-item');
+      allNavItems.forEach(item => item.classList.remove('active'));
+
+      let activeNavItem = null;
+      if (activeRoute === 'home') {
+        // Find by data-nav="home", if it exists
+        activeNavItem = document.querySelector('#dropdown-menu .dropdown-item[data-nav="home"]');
+      } else if (activeRoute === 'allArtists' || activeRoute === 'artist') {
+        // Highlight "All Artists" when on list or individual artist page
+        activeNavItem = document.querySelector('#dropdown-menu .dropdown-item[data-nav="all-artists"]');
+      }
+      
+      // Note: Modal links like 'Favorites' aren't "pages" in the router, so they won't be
+      // highlighted by this logic. This correctly highlights page-based navigation.
+      
+      if (activeNavItem) {
+        activeNavItem.classList.add('active');
+      }
+    } catch (e) {
+      console.error("Failed to update nav active state:", e);
+    }
+    // --- NEW LOGIC END ---
+
     if (animateChanges) {
       const wrapper = list.closest(".breadcrumb-wrapper");
       if (wrapper) {
