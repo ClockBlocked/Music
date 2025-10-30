@@ -1251,7 +1251,7 @@ bindSongItemEvents: (container) => {
       if (navigator.clipboard) {
         navigator.clipboard.writeText(shareUrl).then(() => {
           notifications.show("Song link copied to clipboard!", NOTIFICATION_TYPES.SUCCESS);
-        }).catch(()_ => {
+        }).catch(() => {
           notifications.show("Share feature not available", NOTIFICATION_TYPES.WARNING);
         });
       } else {
