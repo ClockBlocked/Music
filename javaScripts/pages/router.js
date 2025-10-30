@@ -13,7 +13,6 @@ export const deepLinkRouter = {
     return segment.replace(/\./g, ' ');
   },
   
-  // --- NEW FUNCTION ---
   /**
    * Generates a URL for a given route and parameters.
    * @param {string} routeName - The name of the route (e.g., 'artist', 'home').
@@ -71,17 +70,14 @@ export const deepLinkRouter = {
     }
     return path.replace(/\/+/g, '/'); // Clean up double slashes
   },
-  // --- END NEW FUNCTION ---
 
   parseCurrentPath() {
     const path = window.location.pathname;
     
-    // --- MODIFIED ---
     // Make path relative to the basePath
     const relativePath = path.startsWith(this.basePath) 
       ? path.substring(this.basePath.length) 
       : path;
-    // --- END MODIFIED ---
 
     const segments = relativePath.split('/').filter(Boolean);
 
@@ -115,7 +111,14 @@ export const deepLinkRouter = {
       'search': () => this.navigateToSearch(params[0]),
     };
 
-    const handler = routeHandlers[route] || routeHandlers[''];
+    // --- MODIFIED ---
+    // Use navigateToNotFound as the fallback
+    const handler = routeHandlers[route] || (() => this.navigateToNotFound({
+      title: 'Page Not Found',
+      message: `The URL path "${pathInfo.fullPath}" does not correspond to any content.`,
+    }));
+    // --- END MODIFIED ---
+    
     return handler();
   },
 
@@ -124,20 +127,40 @@ export const deepLinkRouter = {
       window.appState.router.navigateTo(window.ROUTES?.HOME || '/');
     }
   },
+  
+  // --- NEW FUNCTION ---
+  navigateToNotFound(error = {}) {
+    if (window.navigation?.pages?.loadNotFoundPage) {
+      window.navigation.pages.loadNotFoundPage(error);
+    } else {
+      // Fallback if navigation module isn't ready
+      this.navigateToHome();
+    }
+  },
+  // --- END NEW FUNCTION ---
 
   navigateToArtist(artistName) {
     if (!artistName) {
       this.navigateToHome();
       return;
     }
-
-    // Already decoded if coming from parseCurrentPath
-    const decodedName = artistName;
+    
+    // --- MODIFIED ---
+    // Check if artist exists before navigating
+    const artistData = window.music?.find(a => a.artist === artistName);
+    if (!artistData) {
+      this.navigateToNotFound({
+        title: 'Artist Not Found',
+        message: `We couldn't find an artist named "${artistName}".`,
+      });
+      return;
+    }
+    // --- END MODIFIED ---
 
     if (window.appState?.router) {
       window.appState.router.navigateTo(
         window.ROUTES?.ARTIST || 'artist',
-        { artist: decodedName }
+        { artist: artistName }
       );
     }
   },
@@ -150,7 +173,12 @@ export const deepLinkRouter = {
 
   navigateToAlbum(artistName, albumName) {
     if (!artistName || !albumName) {
-      this.navigateToHome();
+      // --- MODIFIED ---
+      this.navigateToNotFound({
+        title: 'Invalid URL',
+        message: 'An artist and album name are required for this page.',
+      });
+      // --- END MODIFIED ---
       return;
     }
 
@@ -159,11 +187,32 @@ export const deepLinkRouter = {
 
     if (window.appState?.router && window.music) {
       const artistData = window.music.find(a => a.artist === decodedArtist);
-      if (artistData && window.navigation?.pages?.loadArtistPage) {
-        window.navigation.pages.loadArtistPage(artistData, decodedAlbum);
+      
+      // --- MODIFIED ---
+      if (artistData) {
+        const albumData = artistData.albums.find(a => this.encodeName(a.album) === this.encodeName(decodedAlbum));
+        
+        if (albumData && window.navigation?.pages?.loadArtistPage) {
+          // Store the album to load, as loadArtistPage will be called by the internal router
+          sessionStorage.setItem('pendingAlbumLoad', albumData.album);
+          
+          window.appState.router.navigateTo(
+            window.ROUTES?.ARTIST || 'artist',
+            { artist: decodedArtist }
+          );
+        } else {
+          this.navigateToNotFound({
+            title: 'Album Not Found',
+            message: `We couldn't find the album "${decodedAlbum}" by ${decodedArtist}.`,
+          });
+        }
       } else {
-        this.navigateToHome();
+        this.navigateToNotFound({
+          title: 'Artist Not Found',
+          message: `We couldn't find an artist named "${decodedArtist}".`,
+        });
       }
+      // --- END MODIFIED ---
     }
   },
 
