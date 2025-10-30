@@ -1,17 +1,85 @@
 export const deepLinkRouter = {
+  basePath: '/Music', // Base path for the application
+
   // Helper to encode names (spaces to periods)
   encodeName(name) {
+    if (typeof name !== 'string') return '';
     return name.trim().replace(/\s+/g, '.');
   },
 
   // Helper to decode names (periods to spaces)
   decodeName(segment) {
+    if (typeof segment !== 'string') return '';
     return segment.replace(/\./g, ' ');
+  },
+  
+  /**
+   * Generates a URL for a given route and parameters.
+   * @param {string} routeName - The name of the route (e.g., 'artist', 'home').
+   * @param {object} [params={}] - An object of parameters for the route.
+   * @returns {string} The constructed URL.
+   */
+  generateLink(routeName, params = {}) {
+    let path = this.basePath;
+
+    switch (routeName) {
+      case 'home':
+        path += '/';
+        break;
+      case 'artists':
+        path += '/artists';
+        break;
+      case 'artist':
+        if (params.artist) {
+          path += `/artist/${this.encodeName(params.artist)}`;
+        } else {
+          console.warn('generateLink: "artist" route missing artist param');
+          path += '/artists'; // Fallback
+        }
+        break;
+      case 'album':
+        if (params.artist && params.album) {
+          path += `/album/${this.encodeName(params.artist)}/${this.encodeName(params.album)}`;
+        } else {
+          console.warn('generateLink: "album" route missing params');
+          path += '/'; // Fallback to home
+        }
+        break;
+      case 'playlist':
+        if (params.id) {
+          path += `/playlist/${params.id}`;
+        } else {
+          console.warn('generateLink: "playlist" route missing id param');
+          path += '/'; // Fallback to home
+        }
+        break;
+      case 'favorites':
+        path += `/favorites/${params.type || 'songs'}`;
+        break;
+      case 'search':
+        if (params.query) {
+          path += `/search/${this.encodeName(params.query)}`;
+        } else {
+          console.warn('generateLink: "search" route missing query param');
+          path += '/'; // Fallback to home
+        }
+        break;
+      default:
+        console.warn(`generateLink: Unknown routeName "${routeName}"`);
+        path += '/'; // Fallback to home
+    }
+    return path.replace(/\/+/g, '/'); // Clean up double slashes
   },
 
   parseCurrentPath() {
     const path = window.location.pathname;
-    const segments = path.split('/').filter(Boolean);
+    
+    // Make path relative to the basePath
+    const relativePath = path.startsWith(this.basePath) 
+      ? path.substring(this.basePath.length) 
+      : path;
+
+    const segments = relativePath.split('/').filter(Boolean);
 
     // Decode segments that might have been encoded with periods
     const decodedSegments = segments.map(seg => this.decodeName(seg));
@@ -43,7 +111,14 @@ export const deepLinkRouter = {
       'search': () => this.navigateToSearch(params[0]),
     };
 
-    const handler = routeHandlers[route] || routeHandlers[''];
+    // --- MODIFIED ---
+    // Use navigateToNotFound as the fallback
+    const handler = routeHandlers[route] || (() => this.navigateToNotFound({
+      title: 'Page Not Found',
+      message: `The URL path "${pathInfo.fullPath}" does not correspond to any content.`,
+    }));
+    // --- END MODIFIED ---
+    
     return handler();
   },
 
@@ -52,20 +127,40 @@ export const deepLinkRouter = {
       window.appState.router.navigateTo(window.ROUTES?.HOME || '/');
     }
   },
+  
+  // --- NEW FUNCTION ---
+  navigateToNotFound(error = {}) {
+    if (window.navigation?.pages?.loadNotFoundPage) {
+      window.navigation.pages.loadNotFoundPage(error);
+    } else {
+      // Fallback if navigation module isn't ready
+      this.navigateToHome();
+    }
+  },
+  // --- END NEW FUNCTION ---
 
   navigateToArtist(artistName) {
     if (!artistName) {
       this.navigateToHome();
       return;
     }
-
-    // Already decoded if coming from parseCurrentPath
-    const decodedName = artistName;
+    
+    // --- MODIFIED ---
+    // Check if artist exists before navigating
+    const artistData = window.music?.find(a => a.artist === artistName);
+    if (!artistData) {
+      this.navigateToNotFound({
+        title: 'Artist Not Found',
+        message: `We couldn't find an artist named "${artistName}".`,
+      });
+      return;
+    }
+    // --- END MODIFIED ---
 
     if (window.appState?.router) {
       window.appState.router.navigateTo(
         window.ROUTES?.ARTIST || 'artist',
-        { artist: decodedName }
+        { artist: artistName }
       );
     }
   },
@@ -78,7 +173,12 @@ export const deepLinkRouter = {
 
   navigateToAlbum(artistName, albumName) {
     if (!artistName || !albumName) {
-      this.navigateToHome();
+      // --- MODIFIED ---
+      this.navigateToNotFound({
+        title: 'Invalid URL',
+        message: 'An artist and album name are required for this page.',
+      });
+      // --- END MODIFIED ---
       return;
     }
 
@@ -87,11 +187,32 @@ export const deepLinkRouter = {
 
     if (window.appState?.router && window.music) {
       const artistData = window.music.find(a => a.artist === decodedArtist);
-      if (artistData && window.navigation?.pages?.loadArtistPage) {
-        window.navigation.pages.loadArtistPage(artistData, decodedAlbum);
+      
+      // --- MODIFIED ---
+      if (artistData) {
+        const albumData = artistData.albums.find(a => this.encodeName(a.album) === this.encodeName(decodedAlbum));
+        
+        if (albumData && window.navigation?.pages?.loadArtistPage) {
+          // Store the album to load, as loadArtistPage will be called by the internal router
+          sessionStorage.setItem('pendingAlbumLoad', albumData.album);
+          
+          window.appState.router.navigateTo(
+            window.ROUTES?.ARTIST || 'artist',
+            { artist: decodedArtist }
+          );
+        } else {
+          this.navigateToNotFound({
+            title: 'Album Not Found',
+            message: `We couldn't find the album "${decodedAlbum}" by ${decodedArtist}.`,
+          });
+        }
       } else {
-        this.navigateToHome();
+        this.navigateToNotFound({
+          title: 'Artist Not Found',
+          message: `We couldn't find an artist named "${decodedArtist}".`,
+        });
       }
+      // --- END MODIFIED ---
     }
   },
 
@@ -134,7 +255,8 @@ export const deepLinkRouter = {
 
     const pathInfo = this.parseCurrentPath();
 
-    if (pathInfo.fullPath !== '/' && pathInfo.route && pathInfo.route !== 'home') {
+    // Check against basePath-relative path
+    if (pathInfo.fullPath !== this.basePath && pathInfo.fullPath !== `${this.basePath}/` && pathInfo.route && pathInfo.route !== 'home') {
       console.log('Deep link detected:', pathInfo);
 
       const checkInitialized = setInterval(() => {
@@ -151,7 +273,7 @@ export const deepLinkRouter = {
         clearInterval(checkInitialized);
         if (!window.appState?.router) {
           console.error('App not initialized after 5 seconds, redirecting to home');
-          window.location.href = '/';
+          window.location.href = this.basePath || '/';
         }
       }, 5000);
     }
