@@ -122,7 +122,8 @@ export const deepLinkRouter = {
 
   navigateToHome: function() {
     if (window.appState?.router) {
-      window.appState.router.navigateTo(window.ROUTES?.HOME || 'home'); // Use 'home' routeName
+      // Use the *route name* 'home', not the path '/'
+      window.appState.router.navigateTo('home'); 
     }
   },
   
@@ -153,7 +154,7 @@ export const deepLinkRouter = {
 
     if (window.appState?.router) {
       window.appState.router.navigateTo(
-        window.ROUTES?.ARTIST || 'artist',
+        'artist', // Use route name
         { artist: artistName }
       );
     }
@@ -161,7 +162,7 @@ export const deepLinkRouter = {
 
   navigateToAllArtists: function() {
     if (window.appState?.router) {
-      window.appState.router.navigateTo(window.ROUTES?.ALL_ARTISTS || 'artists');
+      window.appState.router.navigateTo('artists'); // Use route name
     }
   },
 
@@ -189,7 +190,7 @@ export const deepLinkRouter = {
           sessionStorage.setItem('pendingAlbumLoad', albumData.album);
           
           window.appState.router.navigateTo(
-            window.ROUTES?.ARTIST || 'artist',
+            'artist', // Use route name
             { artist: decodedArtist }
           );
         } else {
@@ -240,16 +241,12 @@ export const deepLinkRouter = {
     }
   },
 
-  // --- MODIFICATION START ---
-  // This function is now responsible for handling ALL page loads,
-  // not just deep links.
   initialize: function() {
     if (window.deepLinkHandled) return;
     window.deepLinkHandled = true;
 
     const pathInfo = this.parseCurrentPath();
     
-    // This console log will now fire on ALL page loads
     console.log('Router initializing with path:', pathInfo);
 
     const checkInitialized = setInterval(() => {
@@ -273,7 +270,6 @@ export const deepLinkRouter = {
       }
     }, 5000);
   },
-  // --- MODIFICATION END ---
 
   bindPopState: function() {
     window.addEventListener('popstate', (event) => {
