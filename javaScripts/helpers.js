@@ -24,7 +24,6 @@ export const helpers = {
   getArtistImageUrl: function(artistName) {
     if (!artistName) return helpers.getDefaultArtistImage();
     const normalizedName = helpers.normalizeNameForUrl(artistName);
-     // Use the existing normalization function
     return `https://raw.githubusercontent.com/ClockBlocked/ClockBlocked.github.io/refs/heads/Finalfinal/global/content/images/artistPortraits/${normalizedName}.png`;
   },
 
@@ -115,35 +114,36 @@ export const helpers = {
     return artist.albums.reduce((total, album) => total + (album.songs ? album.songs.length : 0), 0);
   },
 
-  // --- NEW FUNCTION START ---
-  /**
-   * Finds artists with the same genre.
-   * @param {string} currentArtistName - The name of the artist to compare against.
-   * @param {object} [options={ limit: 24 }] - Options, including the max number of artists to return.
-   * @returns {string[]} An array of similar artist names.
-   */
-  getSimilarArtists: function(currentArtistName, options = { limit: 24 }) {
-    const { limit } = options;
-    if (!window.music || !currentArtistName) return [];
-
-    const currentArtist = window.music.find(a => a.artist === currentArtistName);
-    if (!currentArtist || !currentArtist.genre) return [];
-
-    const currentGenre = currentArtist.genre.toLowerCase();
+  // --- NEWLY ADDED FUNCTION (from global.js) ---
+  getSimilarArtists: function(artistName, options = { limit: 12, includeSelf: false }) {
+    const lib = Array.isArray(typeof music !== 'undefined' ? music : null) ? music : 
+                (Array.isArray(window.music) ? window.music : []);
+    if (!Array.isArray(lib) || !lib.length) return [];
     
-    const similar = window.music.filter(artist => 
-      artist.artist !== currentArtistName &&
-      artist.genre &&
-      artist.genre.toLowerCase() === currentGenre
-    );
-
-    // Shuffle and slice the results
-    return similar
-      .map(artist => artist.artist)
-      .sort(() => 0.5 - Math.random()) // Shuffle the array
-      .slice(0, limit); // Get the specified limit
+    // Find artist by name
+    const artist = lib.find(a => a.artist === artistName);
+    
+    // Check if artist and similar array exist
+    if (!artist || !Array.isArray(artist.similar)) {
+      // Fallback: Find artists with the same genre if 'similar' array is missing
+      if (!artist || !artist.genre) return [];
+      const currentGenre = artist.genre.toLowerCase();
+      const similar = lib.filter(a => 
+        a.artist !== artistName &&
+        a.genre &&
+        a.genre.toLowerCase() === currentGenre
+      );
+      return similar
+        .map(a => a.artist)
+        .sort(() => 0.5 - Math.random()) // Shuffle
+        .slice(0, options.limit || 12);
+    }
+    
+    // Use the 'similar' array if it exists
+    const arr = options.includeSelf ? artist.similar.slice() : artist.similar.filter(n => n !== artistName);
+    return Array.from(new Set(arr)).slice(0, options.limit || 12);
   },
-  // --- NEW FUNCTION END ---
+  // --- END NEW FUNCTION ---
 
   parseDuration: function(durationStr) {
     if (typeof durationStr !== "string") return 0;
@@ -248,7 +248,7 @@ export const helpers = {
     
     return result;
   },
-
+  
   // Added scrollToTop as it was in my previous (incorrect) version but not your file
   scrollToTop: function (smooth = true) {
     try {
