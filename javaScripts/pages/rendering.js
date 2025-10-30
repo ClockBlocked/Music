@@ -17,7 +17,13 @@ import { deepLinkRouter } from './router.js';
 
 export const escapeForAttribute = (str) => {
   if (!str) return '';
-  return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // Convert to string, handle potential objects/numbers
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/'/g, '&#39;') // Use HTML entity for single quote
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 };
 
 
@@ -279,7 +285,7 @@ createRouter: () => {
 
     handleInitialRoute: function () {
       const path = window.location.pathname + window.location.search;
-      // Let the deepLinkRouter handle the initial load
+      // The deepLinkRouter.initialize() function now handles all logic
       // this.handleRoute(path);
     },
 
@@ -295,12 +301,16 @@ createRouter: () => {
       // Check if we are already on this URL
       if (window.location.pathname === url.replace(/\/$/, '')) {
         // Even if URL is same, re-run handler to reload content
-        if (this.routes[routeName]) this.routes[routeName].handler(params);
+        if (this.routes[routeName] && typeof this.routes[routeName].handler === 'function') {
+           this.routes[routeName].handler(params);
+        }
         return;
       }
       
       window.history.pushState(params, "", url);
-      if (this.routes[routeName]) this.routes[routeName].handler(params);
+      if (this.routes[routeName] && typeof this.routes[routeName].handler === 'function') {
+        this.routes[routeName].handler(params);
+      }
     },
 
     navigateToArtist: function (artistName) {
@@ -623,6 +633,10 @@ createRouter: () => {
       }, 250);
     },
 
+// --- MODIFICATION START ---
+// Reverted this function to match the logic from your working file.
+// It now passes the full `songData` object to the template,
+// which creates the `data-song` attribute.
 renderAlbumSongs: (albumContainer, album, artistName) => {
   const songsContainer = albumContainer.querySelector(".songs-container");
   if (!songsContainer) return;
@@ -634,8 +648,9 @@ renderAlbumSongs: (albumContainer, album, artistName) => {
     return;
   }
 
-  // --- FIX: Initialize in-memory data store ---
-  songsContainer._songsData = [];
+  // NOTE: We are NOT using the _songsData in-memory array here,
+  // to match the logic of your original, working file.
+  // songsContainer._songsData = [];
 
   album.songs.forEach((song, index) => {
     const songData = {
@@ -645,8 +660,7 @@ renderAlbumSongs: (albumContainer, album, artistName) => {
       cover: utils.getAlbumImageUrl(album.album),
     };
 
-    // --- FIX: Store data in memory ---
-    songsContainer._songsData.push(songData);
+    // songsContainer._songsData.push(songData); // Not using this
 
     const isFavorite = appState.favorites.has("songs", song.id);
     const songElement = create(
@@ -655,7 +669,7 @@ renderAlbumSongs: (albumContainer, album, artistName) => {
         title: song.title,
         artist: artistName,
         duration: song.duration || "0:00",
-        songData: songData, // <-- THIS LINE IS THE FIX. It must be passed to the template.
+        songData: songData, // This is the critical line
         context: 'base',
         isFavorite: isFavorite,
         showTrackNumber: true,
@@ -663,13 +677,15 @@ renderAlbumSongs: (albumContainer, album, artistName) => {
       })
     );
 
-    songElement.dataset.index = index;
+    // We still use dataset.index for double-click logic
+    songElement.dataset.index = index; 
 
     songsContainer.appendChild(songElement);
   });
 
   navigation.events.bindSongItemEvents(songsContainer);
 },
+// --- MODIFICATION END ---
 
     buildSimilar: (names) => {
       const rows = document.querySelectorAll('.similar-rows .names-row');
@@ -878,9 +894,9 @@ renderAlbumSongs: (albumContainer, album, artistName) => {
       }
     },
 
-// --- FIX IS HERE ---
-// Reverted this function to use `songItem.dataset.song` for ALL actions,
-// which is consistent with the user's old, working code and `templates.js`.
+// --- MODIFICATION START ---
+// This function is reverted to read from `songItem.dataset.song`
+// for all actions, which matches your original, working file.
 bindSongItemEvents: (container) => {
   if (!container) return;
 
@@ -891,17 +907,11 @@ bindSongItemEvents: (container) => {
     // Attempt to parse song data once
     let songData = null;
     try {
-      // The `data-song` attribute is added by `render.songItem` in templates.js
+      // The `data-song` attribute is (and should be) added by `render.songItem`
       songData = JSON.parse(songItem.dataset.song);
     } catch (e) {
       console.error("Failed to parse song data for item:", songItem, e);
       return; // Skip this item if data is bad
-    }
-    
-    // Store in-memory (good practice, but we'll read from dataset for consistency)
-    const songsContainer = songItem.closest('.songs-container');
-    if (songsContainer && songsContainer._songsData && songItem.dataset.index) {
-       songsContainer._songsData[parseInt(songItem.dataset.index)] = songData;
     }
 
     // Double-click/tap
@@ -948,32 +958,26 @@ bindSongItemEvents: (container) => {
       actionBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         
-        // Re-read data just in case, but use the one from the loop
-        let currentSongData = songData;
-        if (!currentSongData) {
-            try {
-                currentSongData = JSON.parse(songItem.dataset.song);
-            } catch(err) {
-                 console.error("Could not get song data for action:", actionBtn.dataset.action, err);
-                 return;
-            }
+        // We use the `songData` parsed at the beginning of the loop
+        if (!songData) {
+            console.error("Could not get song data for action:", actionBtn.dataset.action);
+            return;
         }
-        
-        if (!currentSongData) return;
 
         const action = actionBtn.dataset.action;
         const context = songItem.dataset.context || 'base';
 
         if (action === 'more') {
-          navigation.actions.showMoreActionsPopover(actionBtn, currentSongData, context);
+          navigation.actions.showMoreActionsPopover(actionBtn, songData, context);
         } else {
-          navigation.actions.handleSongAction(action, currentSongData, context);
+          navigation.actions.handleSongAction(action, songData, context);
         }
       });
     });
   });
-}
-// --- END OF FIX ---
+},
+// --- MODIFICATION END ---
+
   },
 
   actions: {
@@ -1247,7 +1251,7 @@ bindSongItemEvents: (container) => {
       if (navigator.clipboard) {
         navigator.clipboard.writeText(shareUrl).then(() => {
           notifications.show("Song link copied to clipboard!", NOTIFICATION_TYPES.SUCCESS);
-        }).catch(() => {
+        }).catch(()_ => {
           notifications.show("Share feature not available", NOTIFICATION_TYPES.WARNING);
         });
       } else {
@@ -1256,3 +1260,4 @@ bindSongItemEvents: (container) => {
     }
   }
 };
+
