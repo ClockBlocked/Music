@@ -527,9 +527,9 @@ Add this to your styleSheets/main.css file
 
 /* Tablet/Desktop responsive adjustments for existing drawer */
 @media (min-width: 768px) and (max-width: 1023px) {
-    /* Tablet: Centered modal-style drawer */
-    .drawer {
-        display: flex;
+    /* Tablet: Centered modal-style drawer — apply layout only when open */
+    .drawer:popover-open,
+    .drawer.is-open {
         align-items: center;
         justify-content: center;
         padding: 20px;
@@ -572,9 +572,9 @@ Add this to your styleSheets/main.css file
 
 /* Desktop responsive adjustments */
 @media (min-width: 1024px) {
-    /* Desktop: Larger centered modal */
-    .drawer {
-        display: flex;
+    /* Desktop: Larger centered modal — apply layout only when open */
+    .drawer:popover-open,
+    .drawer.is-open {
         align-items: center;
         justify-content: center;
         padding: 40px;
@@ -656,19 +656,11 @@ Add this to your styleSheets/main.css file
     }
 }
 
-/* Fix tablet popover behavior - prevent immediate closing */
+/* Fix tablet popover behavior - ensure correct show/hide */
 @media (min-width: 768px) {
     .drawer::backdrop {
         background: rgba(0, 0, 0, 0.5);
         backdrop-filter: var(--blur-md);
-    }
-    
-    .drawer:not(:popover-open) {
-        display: none;
-    }
-    
-    .drawer:popover-open {
-        display: flex;
     }
     
     /* Ensure drawer content doesn't trigger backdrop clicks */
@@ -687,20 +679,21 @@ Add this to your styleSheets/main.css file
 
 /* Animation fixes for tablet/desktop */
 @media (min-width: 768px) {
-    .drawer:popover-open {
-        animation: fadeIn 0.3s ease;
+    .drawer:popover-open,
+    .drawer.is-open {
+        animation: drawerFadeIn 0.3s ease;
     }
     
     .drawer.closing {
-        animation: fadeOut 0.3s ease;
+        animation: drawerFadeOut 0.3s ease;
     }
     
-    @keyframes fadeIn {
+    @keyframes drawerFadeIn {
         from { opacity: 0; }
         to { opacity: 1; }
     }
     
-    @keyframes fadeOut {
+    @keyframes drawerFadeOut {
         from { opacity: 1; }
         to { opacity: 0; }
     }
@@ -3757,7 +3750,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function isDrawerOpen() {
         if (supportsPopover) {
-            try { return drawer.matches(':popover-open'); } catch(e) {}
+            try { return drawer.matches(':popover-open'); } catch(e) { console.warn('Popover match failed:', e); }
         }
         return drawer && drawer.classList.contains('is-open');
     }
@@ -3765,7 +3758,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function openDrawer() {
         if (!drawer) return;
         if (supportsPopover) {
-            try { drawer.showPopover(); return; } catch(e) {}
+            try { drawer.showPopover(); return; } catch(e) { console.warn('showPopover failed:', e); }
         }
         drawer.removeAttribute('hidden');
         drawer.classList.add('is-open');
@@ -3775,7 +3768,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeDrawer() {
         if (!drawer) return;
         if (supportsPopover) {
-            try { drawer.hidePopover(); return; } catch(e) {}
+            try { drawer.hidePopover(); return; } catch(e) { console.warn('hidePopover failed:', e); }
         }
         drawer.classList.remove('is-open');
         drawer.setAttribute('hidden', '');

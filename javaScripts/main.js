@@ -2553,7 +2553,7 @@ export const unifiedPlayerController = {
     
     if (this.drawer) {
       if (typeof this.drawer.showPopover === 'function') {
-        try { this.drawer.showPopover(); return; } catch(e) {}
+        try { this.drawer.showPopover(); return; } catch(e) { console.warn('showPopover failed:', e); }
       }
       // CSS fallback
       this.drawer.removeAttribute('hidden');
@@ -2573,13 +2573,21 @@ export const unifiedPlayerController = {
     
     if (this.drawer) {
       if (typeof this.drawer.hidePopover === 'function') {
-        try { this.drawer.hidePopover(); return; } catch(e) {}
+        try { this.drawer.hidePopover(); return; } catch(e) { console.warn('hidePopover failed:', e); }
       }
       // CSS fallback
       this.drawer.classList.remove('is-open');
       this.drawer.setAttribute('hidden', '');
       document.body.style.overflow = '';
     }
+  },
+
+  isOpen: function() {
+    if (!this.drawer) return false;
+    if (typeof this.drawer.matches === 'function') {
+      try { return this.drawer.matches(':popover-open'); } catch(e) {}
+    }
+    return this.drawer.classList.contains('is-open');
   },
 
   toggle: function() {
@@ -2593,8 +2601,7 @@ export const unifiedPlayerController = {
     }
     
     if (this.drawer) {
-      const isOpen = (typeof this.drawer.matches === 'function' && (() => { try { return this.drawer.matches(':popover-open'); } catch(e) { return false; } })()) || this.drawer.classList.contains('is-open');
-      if (isOpen) {
+      if (this.isOpen()) {
         this.close();
       } else {
         this.open();

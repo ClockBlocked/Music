@@ -5,20 +5,23 @@
    block in index.html above the drawer element.
    ============================================================ */
 
-/* Fallback for browsers that do not support the Popover API */
-.drawer {
-    display: none;
-}
-.drawer.is-open,
-.drawer:popover-open {
-    display: block;
+/* The drawer is hidden via the HTML `hidden` attribute by default.
+   Visibility is managed via:
+   - Popover API: showPopover() / hidePopover()
+   - CSS fallback: .is-open class (see index.html inline styles)
+*/
+
+/* Ensure the popover is displayed as flex-column on mobile */
+.drawer:popover-open,
+.drawer.is-open {
+    display: flex;
+    flex-direction: column;
 }
 
 /* Tablet/Desktop: Centered modal-style drawer */
 @media (min-width: 768px) and (max-width: 1023px) {
     .drawer.is-open,
     .drawer:popover-open {
-        display: flex;
         align-items: center;
         justify-content: center;
         padding: 20px;
@@ -60,7 +63,6 @@
 @media (min-width: 1024px) {
     .drawer.is-open,
     .drawer:popover-open {
-        display: flex;
         align-items: center;
         justify-content: center;
         padding: 40px;
