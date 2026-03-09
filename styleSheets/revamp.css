@@ -1,0 +1,1134 @@
+/* ============================================================
+   REVAMP.CSS — Modern visual overrides for MyBeats
+   Keeps the existing dark/dim colour scheme, amplifies polish.
+   ============================================================ */
+
+/* ---- 1. GLOBAL BASE IMPROVEMENTS ---- */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--background-canvas);
+  color: var(--text-200);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background-200);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--background-600);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--background-700);
+}
+
+/* ---- 2. MAIN CONTENT AREA ---- */
+
+#mainArea {
+  padding-bottom: 5rem;
+}
+
+@media (max-width: 767px) {
+  #mainArea {
+    padding-bottom: 6rem;
+  }
+}
+
+/* ---- 3. HOME PAGE ---- */
+
+.home-page-header {
+  text-align: center;
+  padding: 3rem 1.5rem 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-page-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(56, 139, 253, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.h-title {
+  font-size: clamp(2rem, 4vw + 1rem, 3.5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin: 0 0 0.75rem;
+  background: linear-gradient(135deg, #ffffff 0%, #93c5fd 40%, #c4b5fd 75%, #f9a8d4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.h-subtitle {
+  font-size: clamp(1rem, 1.5vw + 0.5rem, 1.25rem);
+  color: var(--text-300);
+  max-width: 40rem;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* --- Bento Grid --- */
+
+.bento-grid {
+  display: grid;
+  gap: 1.25rem;
+  padding: 0 1.25rem 1.5rem;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    padding: 0 1.5rem 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .bento-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.75rem;
+    padding: 0 2rem 2.5rem;
+  }
+}
+
+.bento-span-2 {
+  grid-column: span 1;
+}
+
+@media (min-width: 640px) {
+  .bento-span-2 {
+    grid-column: span 2;
+  }
+}
+
+/* --- Bento Cards --- */
+
+.bento-card {
+  background: var(--background-300);
+  border-radius: 20px;
+  padding: 1.5rem;
+  border: 1px solid var(--border-100);
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.2),
+    0 4px 16px rgba(0,0,0,0.15);
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1),
+              box-shadow 0.25s ease,
+              border-color 0.25s ease;
+  will-change: transform;
+  position: relative;
+  overflow: hidden;
+  min-height: 220px;
+}
+
+.bento-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(56,139,253,0.05) 0%, rgba(164,117,249,0.03) 100%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.bento-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--border-300);
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.2),
+    0 12px 32px rgba(0,0,0,0.25),
+    0 0 0 1px rgba(56,139,253,0.08);
+}
+
+.bento-card:hover::before {
+  opacity: 1;
+}
+
+/* --- Card Header & Title --- */
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-100);
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-100);
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-link {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  text-decoration: none;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+.card-link:hover {
+  background: rgba(56,139,253,0.1);
+  border-color: rgba(56,139,253,0.3);
+  color: var(--accent-primary-hover);
+}
+
+/* ---- 4. BUTTONS ---- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  white-space: nowrap;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.btn-primary,
+.btn.btn-primary {
+  background: var(--accent-primary);
+  color: var(--text-on-accent);
+  border-color: var(--accent-primary);
+  box-shadow: 0 2px 8px rgba(56,139,253,0.3);
+}
+
+.btn-primary:hover {
+  background: var(--accent-primary-hover);
+  border-color: var(--accent-primary-hover);
+  box-shadow: 0 4px 16px rgba(56,139,253,0.4);
+  transform: translateY(-1px);
+}
+
+.btn-secondary,
+.btn.btn-secondary {
+  background: var(--background-500);
+  color: var(--text-200);
+  border-color: var(--border-300);
+}
+
+.btn-secondary:hover {
+  background: var(--background-600);
+  border-color: var(--border-accent);
+  color: var(--text-100);
+  transform: translateY(-1px);
+}
+
+.btn-ghost,
+.btn.btn-ghost {
+  background: transparent;
+  color: var(--text-300);
+  border-color: var(--border-200);
+}
+
+.btn-ghost:hover {
+  background: var(--background-400);
+  color: var(--text-100);
+  border-color: var(--border-300);
+}
+
+/* Icon-only buttons */
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--background-400);
+  color: var(--text-300);
+  border: 1px solid var(--border-200);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.btn-icon:hover {
+  background: var(--background-500);
+  color: var(--text-100);
+  border-color: var(--border-accent);
+  transform: scale(1.05);
+}
+
+.btn-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---- 5. BOTTOM NAV BAR (mobile) ---- */
+
+#navbar {
+  border-radius: 16px;
+  background: rgba(var(--background-canvas-rgb, 28, 33, 40), 0.85) !important;
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--border-200) !important;
+  box-shadow:
+    0 -1px 0 rgba(255,255,255,0.04),
+    0 4px 24px rgba(0,0,0,0.35),
+    0 1px 2px rgba(0,0,0,0.2) !important;
+}
+
+.navbar-center {
+  cursor: pointer;
+  border-radius: 12px;
+  transition: background var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.navbar-center:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+.navbar-center:active {
+  background: rgba(255,255,255,0.1);
+}
+
+/* Nav album art */
+#navbar .albumArtwork {
+  border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,0.15) !important;
+}
+
+/* Play indicator dot */
+.play-indicator {
+  background: var(--accent-primary) !important;
+}
+.play-indicator.active {
+  box-shadow: 0 0 0 3px rgba(56,139,253,0.25);
+}
+
+/* Nav song name */
+#navbar .songName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-100) !important;
+}
+
+#navbar .artistName {
+  font-size: 0.75rem;
+  color: var(--text-300) !important;
+}
+
+/* Menu trigger on navbar */
+.menu-trigger {
+  background: var(--background-400) !important;
+  border-radius: 10px !important;
+}
+
+/* ---- 6. DESKTOP/TABLET TRIGGERS ---- */
+
+.unified-triggers {
+  gap: 10px;
+}
+
+.unified-trigger {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 14px !important;
+  background: rgba(var(--background-canvas-rgb, 28, 33, 40), 0.8) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid var(--border-200) !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.unified-trigger:hover {
+  background: var(--background-400) !important;
+  border-color: var(--border-accent) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ---- 7. ARTIST PAGE ---- */
+
+/* Hero section improvements */
+.fragments.artist-hero {
+  border-radius: 24px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+/* Better artist action buttons */
+.artist-action-btn-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1.25rem;
+}
+
+/* Album tabs */
+.album-tab {
+  padding: 0.5rem 1rem !important;
+  border-radius: var(--radius-full) !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  transition: all var(--transition-fast) !important;
+  border: 1px solid transparent !important;
+  cursor: pointer;
+}
+
+.album-tab.active {
+  background: var(--accent-primary) !important;
+  color: var(--text-on-accent) !important;
+  box-shadow: 0 2px 8px rgba(56,139,253,0.3) !important;
+  border-color: var(--accent-primary) !important;
+}
+
+.album-tab:not(.active):hover {
+  background: var(--background-500) !important;
+  border-color: var(--border-300) !important;
+  color: var(--text-100) !important;
+}
+
+/* Song items */
+.song-item {
+  border-radius: 12px !important;
+  transition: background var(--transition-fast), transform var(--transition-fast) !important;
+}
+
+.song-item:hover {
+  background: var(--background-400) !important;
+  transform: translateX(4px);
+}
+
+.song-item .song-title {
+  font-weight: 600;
+  color: var(--text-100);
+}
+
+.song-item .song-duration {
+  color: var(--text-400);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+}
+
+/* ---- 8. ALL ARTISTS PAGE ---- */
+
+.artist-card {
+  border-radius: 20px !important;
+  overflow: hidden;
+  background: var(--background-300) !important;
+  border: 1px solid var(--border-100) !important;
+  transition: all var(--transition-base) !important;
+}
+
+.artist-card:hover {
+  border-color: var(--border-accent) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important;
+  transform: translateY(-4px) !important;
+}
+
+/* ---- 9. DROPDOWN MENU ---- */
+
+.dropdown-menu {
+  background: var(--background-300) !important;
+  border: 1px solid var(--border-200) !important;
+  border-radius: 20px !important;
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.3),
+    0 2px 8px rgba(0,0,0,0.2) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  border-radius: 12px !important;
+  margin: 2px 8px !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.dropdown-item:hover {
+  background: var(--background-500) !important;
+  transform: translateX(4px);
+}
+
+.dropdown-item.active {
+  background: rgba(56,139,253,0.15) !important;
+  border-color: rgba(56,139,253,0.3) !important;
+}
+
+/* ---- 10. BREADCRUMBS ---- */
+
+.breadcrumbs {
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+/* ---- 11. SEARCH MODAL ---- */
+
+.search-modal {
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+
+.search-input-wrapper input {
+  border-radius: var(--radius-full) !important;
+  background: var(--background-400) !important;
+  border-color: var(--border-200) !important;
+  font-size: 1.1rem !important;
+}
+
+.search-input-wrapper input:focus {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 3px rgba(56,139,253,0.15) !important;
+}
+
+/* ---- 12. LOADING BAR ---- */
+
+.loading-bar {
+  height: 3px !important;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-purple), var(--accent-primary)) !important;
+  background-size: 200% 100% !important;
+  animation: loadingShimmer 1.5s linear infinite !important;
+}
+
+@keyframes loadingShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ---- 13. NOTIFICATION TOASTS ---- */
+
+.notification,
+.toast {
+  border-radius: 14px !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid var(--border-200) !important;
+}
+
+/* ---- 14. PLAYER DRAWER IMPROVEMENTS ---- */
+
+/* Better player backdrop for non-popover browsers */
+.drawer.is-open {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+@media (min-width: 768px) {
+  .drawer.is-open {
+    align-items: center;
+  }
+}
+
+/* ---- 15. HOME ALBUM GRID ---- */
+
+.album-cover {
+  border-radius: 12px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast) !important;
+}
+
+.album-card:hover .album-cover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
+}
+
+.album-overlay {
+  border-radius: 12px !important;
+}
+
+.album-play-btn {
+  background: var(--accent-primary) !important;
+  box-shadow: 0 4px 16px rgba(56,139,253,0.4) !important;
+}
+
+/* ---- 16. MODERN TRACK ITEMS (home recently played) ---- */
+
+.modern-track-item {
+  border-radius: 14px !important;
+  background: var(--background-300) !important;
+  border-color: var(--border-100) !important;
+}
+
+.modern-track-item:hover {
+  background: var(--background-400) !important;
+  border-color: var(--border-300) !important;
+  transform: translateX(4px) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2) !important;
+}
+
+/* ---- 17. MISC POLISH ---- */
+
+/* Genre badge */
+.genre-tag,
+.genre-badge {
+  background: rgba(56,139,253,0.12) !important;
+  color: var(--accent-primary) !important;
+  border: 1px solid rgba(56,139,253,0.25) !important;
+  border-radius: var(--radius-full) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  padding: 0.2rem 0.6rem !important;
+}
+
+/* Focus visible outline */
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* Smooth image loading */
+img {
+  transition: opacity 0.3s ease;
+}
+
+img[src=""],
+img:not([src]) {
+  opacity: 0;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(56,139,253,0.3);
+  color: var(--text-100);
+}
+
+/* ---- 18. ARTIST PAGE STATS ROW ---- */
+.stat-item {
+  background: var(--background-400) !important;
+  border: 1px solid var(--border-100) !important;
+  border-radius: 14px !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.stat-item:hover {
+  background: var(--background-500) !important;
+  border-color: var(--border-300) !important;
+  transform: translateY(-2px);
+}
+
+/* ---- 19. NAME PILLS (similar artists) ---- */
+.name-pill {
+  background: var(--background-400) !important;
+  border: 1px solid var(--border-200) !important;
+  border-radius: var(--radius-full) !important;
+  padding: 0.35rem 0.9rem !important;
+  transition: all var(--transition-fast) !important;
+  text-decoration: none !important;
+}
+
+.name-pill:hover {
+  background: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+  color: var(--text-on-accent) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(56,139,253,0.3) !important;
+}
+
+.name-pill h4 {
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+
+/* ---- 20. PLAYLIST CARDS ---- */
+.playlist-card {
+  border-radius: 18px !important;
+  background: var(--background-300) !important;
+  border: 1px solid var(--border-100) !important;
+  transition: all var(--transition-base) !important;
+}
+
+.playlist-card:hover {
+  border-color: var(--border-300) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25) !important;
+  transform: translateY(-4px) !important;
+}
+
+/* ---- 21. MORE-ACTIONS POPOVER ---- */
+.more-actions-popover {
+  border-radius: 18px !important;
+  background: var(--background-300) !important;
+  border: 1px solid var(--border-200) !important;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  overflow: hidden;
+}
+
+.popover-action-btn {
+  border-radius: 10px !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.popover-action-btn:hover {
+  background: var(--background-500) !important;
+  transform: scale(1.03);
+}
+
+/* ---- 22. PAGE WRAPPER ---- */
+#pageWrapper,
+#mainContent,
+main {
+  min-height: 100vh;
+}
+
+/* ---- ANIMATION HELPERS ---- */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+/* ============================================================
+   ARTIST PAGE SPECIFIC REVAMP
+   ============================================================ */
+
+/* --- Hero Section --- */
+.fragments.artist-hero {
+  border-radius: 24px 24px 16px 16px !important;
+  overflow: hidden;
+  border: 1px solid var(--border-100) !important;
+  margin-bottom: 1.5rem !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.25) !important;
+}
+
+.artist-hero-bg {
+  background: linear-gradient(to bottom right,
+    rgba(56, 89, 200, 0.5),
+    rgba(29, 78, 216, 0.4),
+    rgba(147, 51, 234, 0.4)) !important;
+}
+
+.artist-title {
+  font-size: clamp(2rem, 5vw, 4rem) !important;
+  letter-spacing: -0.03em !important;
+  font-weight: 800 !important;
+}
+
+.artist-badge {
+  background: rgba(56,139,253,0.15) !important;
+  border: 1px solid rgba(56,139,253,0.3) !important;
+  color: #93c5fd !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  font-size: 0.75rem !important;
+}
+
+.artist-badge-dot {
+  background: #4ade80 !important;
+  box-shadow: 0 0 0 3px rgba(74,222,128,0.2) !important;
+}
+
+.artist-stat-value {
+  font-size: 2rem !important;
+  font-weight: 800 !important;
+  background: linear-gradient(135deg, #fff, #93c5fd);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+}
+
+.artist-stat-label {
+  font-size: 0.78rem !important;
+  color: rgba(201,209,217,0.6) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  font-weight: 500 !important;
+}
+
+.artist-action-btn {
+  padding: 0.65rem 1.4rem !important;
+  border-radius: 99px !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  background: rgba(255,255,255,0.12) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  transition: all var(--transition-fast) !important;
+  color: #fff !important;
+}
+
+.artist-action-btn:hover {
+  background: rgba(56,139,253,0.25) !important;
+  border-color: rgba(56,139,253,0.5) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 16px rgba(56,139,253,0.3) !important;
+}
+
+.artist-action-icon {
+  padding: 0.65rem !important;
+  border-radius: 50% !important;
+  background: rgba(255,255,255,0.12) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  transition: all var(--transition-fast) !important;
+  color: #fff !important;
+}
+
+.artist-action-icon:hover {
+  background: rgba(255,255,255,0.22) !important;
+  transform: scale(1.1) !important;
+}
+
+/* --- Artist Avatar --- */
+.artist-avatar-container {
+  border-radius: 20px !important;
+  border: 3px solid rgba(255,255,255,0.15) !important;
+  box-shadow: 0 20px 48px rgba(0,0,0,0.4) !important;
+}
+
+/* --- Stat Cards (quick stats) --- */
+.artist-quick-stats {
+  gap: 1rem !important;
+  padding: 0 !important;
+  margin-bottom: 2rem !important;
+}
+
+.artist-stat-card {
+  border-radius: 16px !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  backdrop-filter: blur(10px) !important;
+  padding: 1.25rem !important;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast) !important;
+}
+
+.artist-stat-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3) !important;
+}
+
+.artist-stat-card.stat-blue {
+  background: linear-gradient(135deg, rgba(37,99,235,0.25), rgba(29,78,216,0.2)) !important;
+  border-color: rgba(37,99,235,0.25) !important;
+}
+
+.artist-stat-card.stat-purple {
+  background: linear-gradient(135deg, rgba(147,51,234,0.25), rgba(107,33,168,0.2)) !important;
+  border-color: rgba(147,51,234,0.25) !important;
+}
+
+.artist-stat-card.stat-pink {
+  background: linear-gradient(135deg, rgba(219,39,119,0.25), rgba(157,23,77,0.2)) !important;
+  border-color: rgba(219,39,119,0.25) !important;
+}
+
+/* --- Album selector tabs --- */
+.album-selector {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.5rem !important;
+  padding: 0 0 1rem !important;
+}
+
+.album-tab {
+  padding: 0.5rem 1rem !important;
+  border-radius: 99px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  transition: all var(--transition-fast) !important;
+  border: 1px solid var(--border-200) !important;
+  background: var(--background-400) !important;
+  color: var(--text-300) !important;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.album-tab.active {
+  background: var(--accent-primary) !important;
+  color: var(--text-on-accent) !important;
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 2px 8px rgba(56,139,253,0.3) !important;
+}
+
+.album-tab:not(.active):hover {
+  background: var(--background-500) !important;
+  border-color: var(--border-accent) !important;
+  color: var(--text-100) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* --- Album card (when album is displayed) --- */
+.album-card {
+  background: var(--background-300) !important;
+  border-radius: 20px !important;
+  padding: 1.25rem !important;
+  border: 1px solid var(--border-100) !important;
+}
+
+.albumFade {
+  border-radius: 16px !important;
+}
+
+.metaAlbumName {
+  font-size: 1.4rem !important;
+  font-weight: 700 !important;
+  color: var(--text-100) !important;
+  letter-spacing: -0.02em !important;
+  margin: 0 0 0.25rem !important;
+}
+
+.metaAlbumYear {
+  font-size: 0.875rem !important;
+  color: var(--text-300) !important;
+  margin: 0 0 1rem !important;
+}
+
+.play-album {
+  background: var(--accent-primary) !important;
+  box-shadow: 0 4px 16px rgba(56,139,253,0.4) !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.play-album:hover {
+  background: var(--accent-primary-hover) !important;
+  transform: scale(1.1) !important;
+  box-shadow: 0 6px 22px rgba(56,139,253,0.55) !important;
+}
+
+/* Songs container */
+.songs-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  margin-top: 0.75rem !important;
+}
+
+/* Play artist button */
+.artist-play-btn {
+  background: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+  border-radius: 99px !important;
+  font-weight: 600 !important;
+  padding: 0.65rem 1.4rem !important;
+  transition: all var(--transition-fast) !important;
+  box-shadow: 0 4px 16px rgba(56,139,253,0.4) !important;
+}
+
+.artist-play-btn:hover {
+  background: var(--accent-primary-hover) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 22px rgba(56,139,253,0.5) !important;
+}
+
+/* Similar artists section */
+.fragments.similar {
+  margin-top: 1.5rem !important;
+}
+
+.similar-head h2 {
+  font-size: clamp(1.1rem, 2.5vw, 1.5rem) !important;
+  font-weight: 700 !important;
+  color: var(--text-100) !important;
+  letter-spacing: -0.02em !important;
+  margin-bottom: 1rem !important;
+}
+
+.name-pill {
+  background: var(--background-400) !important;
+  border: 1px solid var(--border-200) !important;
+  border-radius: 99px !important;
+  padding: 0.4rem 1rem !important;
+  transition: all var(--transition-fast) !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.name-pill:hover {
+  background: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+  color: var(--text-on-accent) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(56,139,253,0.3) !important;
+}
+
+.name-pill h4 {
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+  color: inherit !important;
+}
+
+/* ============================================================
+   MUSIC PLAYER DRAWER — ADDITIONAL POLISH
+   ============================================================ */
+
+/* Song info card */
+.songInfoCard {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  padding: 0 0 1.25rem !important;
+}
+
+.songName.title {
+  font-size: 1.5rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  color: #fff !important;
+  line-height: 1.2 !important;
+  margin: 0 0 0.35rem !important;
+}
+
+.artistName.artist {
+  font-size: 1rem !important;
+  color: rgba(255,255,255,0.7) !important;
+  margin: 0 0 0.2rem !important;
+}
+
+.albumName.album {
+  font-size: 0.85rem !important;
+  color: rgba(255,255,255,0.5) !important;
+  margin: 0 !important;
+}
+
+/* Player progress bar */
+.progressBar {
+  height: 6px !important;
+  border-radius: 99px !important;
+  background: rgba(255,255,255,0.15) !important;
+  cursor: pointer;
+  transition: height 0.2s ease !important;
+}
+
+.progressBar:hover {
+  height: 8px !important;
+}
+
+.progressFill {
+  height: 100% !important;
+  border-radius: 99px !important;
+  background: linear-gradient(90deg, var(--accent-primary), #a78bfa) !important;
+}
+
+/* Player controls */
+.controlBtn--primary {
+  background: linear-gradient(135deg, var(--accent-primary), #7c3aed) !important;
+  box-shadow: 0 6px 24px rgba(56,139,253,0.4) !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.controlBtn--primary:hover {
+  transform: scale(1.08) !important;
+  box-shadow: 0 8px 32px rgba(56,139,253,0.55) !important;
+}
+
+.controlBtn--secondary {
+  background: rgba(255,255,255,0.1) !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.controlBtn--secondary:hover {
+  background: rgba(255,255,255,0.2) !important;
+  transform: scale(1.05) !important;
+}
+
+/* Modern tabs */
+.modernTab {
+  transition: all var(--transition-fast) !important;
+}
+
+.modernTab.active {
+  color: #fff !important;
+}
+
+/* ============================================================
+   HOME PAGE — RECENT TRACKS & ARTIST CARDS
+   ============================================================ */
+
+/* Artist grid on home/all-artists page */
+.modern-artist-card {
+  border-radius: 20px !important;
+  background: var(--background-300) !important;
+  border-color: var(--border-100) !important;
+}
+
+.modern-artist-card:hover {
+  transform: translateY(-6px) !important;
+  border-color: var(--border-300) !important;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3) !important;
+}
+
+/* Recent tracks on home */
+.recent-tracks,
+.favorite-tracks {
+  gap: 4px !important;
+}
+
+/* ============================================================
+   ALL ARTISTS PAGE
+   ============================================================ */
+
+.all-artists-page {
+  padding: 1.25rem !important;
+}
+
+.all-artists-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+  gap: 1rem !important;
+}

@@ -446,22 +446,20 @@ createRouter: () => {
 
       dynamicContent.innerHTML = "";
 
-      // --- This try...catch block is critical ---
-      try {
-        setTimeout(() => {
+      setTimeout(() => {
+        try {
           navigation.rendering.renderArtistPage(artistData, targetAlbumName);
-          pageLoader.complete(); // This is the line that wasn't being reached
+          pageLoader.complete();
           utils.scrollToTop();
-        }, 200);
-      } catch (e) {
-        console.error("CRITICAL ERROR during renderArtistPage:", e);
-        pageLoader.hide(); // Hide the loader immediately if an error occurs
-        navigation.pages.loadNotFoundPage({
-          title: "Render Error",
-          message: "Could not load this artist's page due to an unexpected error.",
-        });
-      }
-      // --- End try...catch block ---
+        } catch (e) {
+          console.error("CRITICAL ERROR during renderArtistPage:", e);
+          pageLoader.hide();
+          navigation.pages.loadNotFoundPage({
+            title: "Render Error",
+            message: "Could not load this artist's page due to an unexpected error.",
+          });
+        }
+      }, 200);
     },
 
     loadAllArtistsPage: () => {

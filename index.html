@@ -35,40 +35,7 @@ MyBeats:  Stream & share your favorite music for free.
 <link rel="icon" href="favicon.ico" type="image/x-icon" />
 <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
 
-<link rel="stylesheet" href="./styleSheets/overlays.css" />
-<link rel="stylesheet" href="./styleSheets/extra.css" />
-<link rel="stylesheet" href="./styleSheets/dynamicOverlays.css" />
-
-<link rel="stylesheet" href="./styleSheets/main.css" />
-<link rel="stylesheet" href="./styleSheets/pages/core.css" />
-<link rel="stylesheet" href="./styleSheets/components/breadCrumbs.css" />
-<link rel="stylesheet" href="./styleSheets/components/navbarPlayer.css" />
-<link rel="stylesheet" href="./styleSheets/components/lists.css" />
-<link rel="stylesheet" href="./styleSheets/components/playlists.css" />
-<link rel="stylesheet" href="./styleSheets/pages/home.css" />
-<link rel="stylesheet" href="./styleSheets/pages/artist.css" />
-<link rel="stylesheet" href="./styleSheets/global/animatedly.css" />
-<link rel="stylesheet" href="./styleSheets/global/fonts.css" />
-<link rel="stylesheet" href="./styleSheets/global/svg.css" />
-
-<!-- Unified responsive stylesheets -->
-<link rel="stylesheet" href="./styleSheets/unified-player.css" />
-<link rel="stylesheet" href="./styleSheets/responsive-layout.css" />
-<link rel="stylesheet" href="./styleSheets/inline-styles.css" />
-<link rel="stylesheet" href="./styleSheets/tailwind-conversion.css" />
-
-<!-- Responsive stylesheets -->
-<link 
-    rel="stylesheet" 
-    media="screen and (min-width: 768px) and (max-width: 1024px)" 
-    href="./styleSheets/responsive/tablet.css"
->
-
-<link 
-    rel="stylesheet" 
-    media="screen and (min-width: 1024px)" 
-    href="./styleSheets/responsive/desktop.css"
->
+<link rel="stylesheet" href="./styleSheets/bundle.css" />
 
 <!-- L I B R A R I E S ------------->
 <link
@@ -96,9 +63,6 @@ MyBeats:  Stream & share your favorite music for free.
   gtag("js", new Date());
   gtag("config", "G-P0KCT8TSPW");
 </script>
-
-<link rel="stylesheet" href="./styleSheets/pages/artist.css">
-
 
 <style>
 /*
@@ -563,9 +527,9 @@ Add this to your styleSheets/main.css file
 
 /* Tablet/Desktop responsive adjustments for existing drawer */
 @media (min-width: 768px) and (max-width: 1023px) {
-    /* Tablet: Centered modal-style drawer */
-    .drawer {
-        display: flex;
+    /* Tablet: Centered modal-style drawer — apply layout only when open */
+    .drawer:popover-open,
+    .drawer.is-open {
         align-items: center;
         justify-content: center;
         padding: 20px;
@@ -608,9 +572,9 @@ Add this to your styleSheets/main.css file
 
 /* Desktop responsive adjustments */
 @media (min-width: 1024px) {
-    /* Desktop: Larger centered modal */
-    .drawer {
-        display: flex;
+    /* Desktop: Larger centered modal — apply layout only when open */
+    .drawer:popover-open,
+    .drawer.is-open {
         align-items: center;
         justify-content: center;
         padding: 40px;
@@ -692,19 +656,11 @@ Add this to your styleSheets/main.css file
     }
 }
 
-/* Fix tablet popover behavior - prevent immediate closing */
+/* Fix tablet popover behavior - ensure correct show/hide */
 @media (min-width: 768px) {
     .drawer::backdrop {
         background: rgba(0, 0, 0, 0.5);
         backdrop-filter: var(--blur-md);
-    }
-    
-    .drawer:not(:popover-open) {
-        display: none;
-    }
-    
-    .drawer:popover-open {
-        display: flex;
     }
     
     /* Ensure drawer content doesn't trigger backdrop clicks */
@@ -723,20 +679,21 @@ Add this to your styleSheets/main.css file
 
 /* Animation fixes for tablet/desktop */
 @media (min-width: 768px) {
-    .drawer:popover-open {
-        animation: fadeIn 0.3s ease;
+    .drawer:popover-open,
+    .drawer.is-open {
+        animation: drawerFadeIn 0.3s ease;
     }
     
     .drawer.closing {
-        animation: fadeOut 0.3s ease;
+        animation: drawerFadeOut 0.3s ease;
     }
     
-    @keyframes fadeIn {
+    @keyframes drawerFadeIn {
         from { opacity: 0; }
         to { opacity: 1; }
     }
     
-    @keyframes fadeOut {
+    @keyframes drawerFadeOut {
         from { opacity: 1; }
         to { opacity: 0; }
     }
@@ -2242,6 +2199,34 @@ Add this to your styleSheets/main.css file
     overflow: hidden;
 }
 
+/* Shown via Popover API */
+.drawer:popover-open {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+/* CSS fallback for non-popover browsers */
+.drawer.is-open {
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* Mobile: bottom sheet layout */
+@media (max-width: 767px) {
+    .drawer:popover-open,
+    .drawer.is-open {
+        align-items: stretch;
+        justify-content: flex-end;
+    }
+}
+
 .drawer::backdrop {
     background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(12px);
@@ -3244,7 +3229,7 @@ Add this to your styleSheets/main.css file
     }
 }
 </style>
-<aside class="drawer" popover="auto" id="drawer">
+<aside class="drawer" popover="manual" id="drawer" hidden>
     <div class="drawerScroller">
         <div class="drawerSlide">
             <div class="drawerAnchors">
@@ -3692,12 +3677,6 @@ Add this to your styleSheets/main.css file
 
 </div><!-- W R A P P E R -->
 
-<!-- L I B R A R I E S -->
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/preline@2.0.3/dist/preline.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tippy.js@6.3.7/dist/tippy.umd.min.js"></script>
-
 <!-- Refactored JavaScript Modules (New 6-file structure) -->
 <!-- Music Library -->
 <script type="module" src="./content/library.js"></script>
@@ -3766,15 +3745,46 @@ document.addEventListener('DOMContentLoaded', () => {
     const unifiedPlayerTrigger = document.getElementById('unified-player-trigger');
     const drawer = document.getElementById('drawer');
     
+    // Detect Popover API support
+    const supportsPopover = drawer && typeof drawer.showPopover === 'function';
+
+    function isDrawerOpen() {
+        if (supportsPopover) {
+            try { return drawer.matches(':popover-open'); } catch(e) { console.warn('Popover match failed:', e); }
+        }
+        return drawer && drawer.classList.contains('is-open');
+    }
+
+    function openDrawer() {
+        if (!drawer) return;
+        if (supportsPopover) {
+            try { drawer.showPopover(); return; } catch(e) { console.warn('showPopover failed:', e); }
+        }
+        drawer.removeAttribute('hidden');
+        drawer.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDrawer() {
+        if (!drawer) return;
+        if (supportsPopover) {
+            try { drawer.hidePopover(); return; } catch(e) { console.warn('hidePopover failed:', e); }
+        }
+        drawer.classList.remove('is-open');
+        drawer.setAttribute('hidden', '');
+        document.body.style.overflow = '';
+    }
+
     function togglePlayer() {
-        if (drawer) {
-            if (drawer.matches(':popover-open')) {
-                drawer.hidePopover();
-            } else {
-                drawer.showPopover();
-            }
+        if (isDrawerOpen()) {
+            closeDrawer();
+        } else {
+            openDrawer();
         }
     }
+
+    // Expose close function globally so close button in player can use it
+    window.closePlayerDrawer = closeDrawer;
     
     // Bind mobile player trigger (navbar center)
     if (mobilePlayerTrigger) {
@@ -3784,6 +3794,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Bind unified player trigger (desktop/tablet)
     if (unifiedPlayerTrigger) {
         unifiedPlayerTrigger.addEventListener('click', togglePlayer);
+    }
+
+    // Bind close button inside player drawer
+    const drawerCloseBtn = document.getElementById('closeBtn');
+    if (drawerCloseBtn) {
+        drawerCloseBtn.addEventListener('click', closeDrawer);
+    }
+
+    // Handle backdrop click to close (for non-popover mode)
+    if (drawer && !supportsPopover) {
+        drawer.addEventListener('click', (e) => {
+            if (e.target === drawer) closeDrawer();
+        });
+    }
+
+    // Bind drawerCurtain and drawerDrag for non-popover browsers
+    if (!supportsPopover) {
+        const drawerCurtain = drawer && drawer.querySelector('.drawerCurtain');
+        const drawerDrag = drawer && drawer.querySelector('.drawerDrag');
+        if (drawerCurtain) drawerCurtain.addEventListener('click', closeDrawer);
+        if (drawerDrag) drawerDrag.addEventListener('click', closeDrawer);
     }
 });
 </script>
@@ -3799,13 +3830,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('📄 DOMContentLoaded - Starting app...');
         await app.initialize();
     });
-</script>
-
-<!-- Debug Console (Optional - remove in production) -->
-<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>
-  eruda.init();
-  eruda.show('console');
 </script>
 
 </body>

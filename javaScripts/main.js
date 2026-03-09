@@ -9,10 +9,6 @@ import { render, create } from "./templates.js";
 import { helpers } from "./helpers.js";
 import { musicSearch } from "./search.js";
 
-// Re-export from utilities/parsers.js (external dependency)
-import { encodeURIComponent } from './utilities/parsers.js';
-export { encodeURIComponent };
-
 // Import page-related modules
 import { homePage, views } from './pages/statics.js';
 import { pageLoader, navigation } from './pages/rendering.js';
@@ -2556,7 +2552,13 @@ export const unifiedPlayerController = {
     }
     
     if (this.drawer) {
-      this.drawer.showPopover();
+      if (typeof this.drawer.showPopover === 'function') {
+        try { this.drawer.showPopover(); return; } catch(e) { console.warn('showPopover failed:', e); }
+      }
+      // CSS fallback
+      this.drawer.removeAttribute('hidden');
+      this.drawer.classList.add('is-open');
+      document.body.style.overflow = 'hidden';
     }
   },
 
@@ -2570,8 +2572,22 @@ export const unifiedPlayerController = {
     }
     
     if (this.drawer) {
-      this.drawer.hidePopover();
+      if (typeof this.drawer.hidePopover === 'function') {
+        try { this.drawer.hidePopover(); return; } catch(e) { console.warn('hidePopover failed:', e); }
+      }
+      // CSS fallback
+      this.drawer.classList.remove('is-open');
+      this.drawer.setAttribute('hidden', '');
+      document.body.style.overflow = '';
     }
+  },
+
+  isOpen: function() {
+    if (!this.drawer) return false;
+    if (typeof this.drawer.matches === 'function') {
+      try { return this.drawer.matches(':popover-open'); } catch(e) {}
+    }
+    return this.drawer.classList.contains('is-open');
   },
 
   toggle: function() {
@@ -2585,7 +2601,7 @@ export const unifiedPlayerController = {
     }
     
     if (this.drawer) {
-      if (this.drawer.matches(':popover-open')) {
+      if (this.isOpen()) {
         this.close();
       } else {
         this.open();
@@ -3500,6 +3516,10 @@ export const app = {
     window.unifiedPlayerIntegration = unifiedPlayerIntegration;
     window.notificationPlayer = notificationPlayer;
     window.eventHandlers = eventHandlers;
+    window.navigation = navigation;
+    window.views = views;
+    window.homePage = homePage;
+    window.musicSearch = musicSearch;
     
     window.playerController = {
       playSong: musicPlayer.ui.playSong,
