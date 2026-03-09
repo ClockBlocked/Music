@@ -1,0 +1,205 @@
+/* ============================================================
+   RESPONSIVE LAYOUT CSS
+   Layout rules for mobile, tablet, and desktop viewports.
+   Note: Additional responsive styles (drawer/player) are in
+   unified-player.css and inline in index.html.
+   ============================================================ */
+
+/* ---- Utility classes ---- */
+.mobile-only {
+    display: block;
+}
+.desktop-tablet-only {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .mobile-only { display: none; }
+    .desktop-tablet-only { display: block; }
+}
+
+/* ---- Unified desktop/tablet trigger bar ---- */
+.unified-triggers {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: var(--z-nav);
+    display: flex;
+    gap: 10px;
+}
+
+.unified-trigger {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-lg);
+    background: var(--background-400);
+    border: 1px solid var(--border-200);
+    color: var(--text-200);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-md);
+    backdrop-filter: var(--blur-sm);
+}
+
+.unified-trigger:hover {
+    background: var(--background-500);
+    border-color: var(--border-accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    color: var(--text-100);
+}
+
+.unified-trigger:active {
+    transform: translateY(0);
+}
+
+.unified-trigger svg {
+    width: 18px;
+    height: 18px;
+}
+
+.unified-trigger:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+/* ---- Mobile layout ---- */
+@media (max-width: 767px) {
+    .unified-triggers { display: none; }
+
+    .dropdown-menu {
+        position: fixed;
+        bottom: calc(45px + 1.25rem + 12px);
+        left: 4vw;
+        right: 4vw;
+        max-height: 70vh;
+        transform: translateY(100%);
+        opacity: 0;
+        transition: transform var(--transition-smooth), opacity var(--transition-smooth);
+        z-index: calc(var(--z-player) + 1);
+        pointer-events: none;
+        visibility: hidden;
+    }
+
+    .dropdown-menu.show {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+        visibility: visible;
+    }
+}
+
+/* ---- Tablet layout ---- */
+@media (min-width: 768px) and (max-width: 1023px) {
+    #navbar { display: none !important; }
+    .unified-triggers { display: flex; }
+
+    #mainArea { padding-bottom: var(--space-xl); }
+
+    .dropdown-menu {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        left: auto;
+        bottom: auto;
+        width: 320px;
+        max-height: calc(100vh - 120px);
+        box-shadow: var(--shadow-xl);
+        transform: translateY(-10px) scale(0.97);
+        opacity: 0;
+        transition: all var(--transition-smooth);
+        pointer-events: none;
+        z-index: calc(var(--z-player) + 1);
+        visibility: hidden;
+    }
+
+    .dropdown-menu.show {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+        pointer-events: auto;
+        visibility: visible;
+    }
+}
+
+/* ---- Desktop layout ---- */
+@media (min-width: 1024px) {
+    #navbar { display: none !important; }
+    .unified-triggers {
+        display: flex;
+        top: var(--space-xl);
+        right: var(--space-xl);
+        gap: var(--space-md);
+    }
+
+    #mainArea {
+        padding-bottom: var(--space-2xl);
+        padding-top: var(--space-md);
+    }
+
+    .dropdown-menu {
+        position: fixed;
+        top: 80px;
+        right: var(--space-xl);
+        left: auto;
+        bottom: auto;
+        width: 360px;
+        max-height: calc(100vh - 120px);
+        box-shadow: var(--shadow-2xl);
+        transform: translateY(-10px) scale(0.97);
+        opacity: 0;
+        transition: all var(--transition-smooth);
+        pointer-events: none;
+        z-index: calc(var(--z-player) + 1);
+        visibility: hidden;
+    }
+
+    .dropdown-menu.show {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+        pointer-events: auto;
+        visibility: visible;
+    }
+
+    .bento-grid {
+        gap: var(--space-xl);
+        padding: var(--space-xl);
+    }
+}
+
+/* ---- Ultra-wide desktop ---- */
+@media (min-width: 1440px) {
+    .unified-triggers {
+        top: var(--space-2xl);
+        right: var(--space-2xl);
+    }
+
+    .unified-trigger {
+        width: 48px;
+        height: 48px;
+    }
+}
+
+/* ---- Landscape mobile ---- */
+@media (max-width: 767px) and (orientation: landscape) {
+    .dropdown-menu {
+        bottom: calc(45px + 12px);
+        max-height: 60vh;
+    }
+}
+
+/* ---- Visibility guard ---- */
+.dropdown-menu:not(.show) {
+    visibility: hidden;
+}
+
+/* ---- Accessibility ---- */
+@media (prefers-reduced-motion: reduce) {
+    .dropdown-menu,
+    .unified-trigger {
+        transition: none;
+        animation: none;
+    }
+}

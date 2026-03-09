@@ -2552,7 +2552,13 @@ export const unifiedPlayerController = {
     }
     
     if (this.drawer) {
-      this.drawer.showPopover();
+      if (typeof this.drawer.showPopover === 'function') {
+        try { this.drawer.showPopover(); return; } catch(e) {}
+      }
+      // CSS fallback
+      this.drawer.removeAttribute('hidden');
+      this.drawer.classList.add('is-open');
+      document.body.style.overflow = 'hidden';
     }
   },
 
@@ -2566,7 +2572,13 @@ export const unifiedPlayerController = {
     }
     
     if (this.drawer) {
-      this.drawer.hidePopover();
+      if (typeof this.drawer.hidePopover === 'function') {
+        try { this.drawer.hidePopover(); return; } catch(e) {}
+      }
+      // CSS fallback
+      this.drawer.classList.remove('is-open');
+      this.drawer.setAttribute('hidden', '');
+      document.body.style.overflow = '';
     }
   },
 
@@ -2581,7 +2593,8 @@ export const unifiedPlayerController = {
     }
     
     if (this.drawer) {
-      if (this.drawer.matches(':popover-open')) {
+      const isOpen = (typeof this.drawer.matches === 'function' && (() => { try { return this.drawer.matches(':popover-open'); } catch(e) { return false; } })()) || this.drawer.classList.contains('is-open');
+      if (isOpen) {
         this.close();
       } else {
         this.open();
@@ -3496,6 +3509,10 @@ export const app = {
     window.unifiedPlayerIntegration = unifiedPlayerIntegration;
     window.notificationPlayer = notificationPlayer;
     window.eventHandlers = eventHandlers;
+    window.navigation = navigation;
+    window.views = views;
+    window.homePage = homePage;
+    window.musicSearch = musicSearch;
     
     window.playerController = {
       playSong: musicPlayer.ui.playSong,

@@ -2206,6 +2206,34 @@ Add this to your styleSheets/main.css file
     overflow: hidden;
 }
 
+/* Shown via Popover API */
+.drawer:popover-open {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+/* CSS fallback for non-popover browsers */
+.drawer.is-open {
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* Mobile: bottom sheet layout */
+@media (max-width: 767px) {
+    .drawer:popover-open,
+    .drawer.is-open {
+        align-items: stretch;
+        justify-content: flex-end;
+    }
+}
+
 .drawer::backdrop {
     background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(12px);
@@ -3208,7 +3236,7 @@ Add this to your styleSheets/main.css file
     }
 }
 </style>
-<aside class="drawer" popover="auto" id="drawer">
+<aside class="drawer" popover="manual" id="drawer" hidden>
     <div class="drawerScroller">
         <div class="drawerSlide">
             <div class="drawerAnchors">
@@ -3724,15 +3752,46 @@ document.addEventListener('DOMContentLoaded', () => {
     const unifiedPlayerTrigger = document.getElementById('unified-player-trigger');
     const drawer = document.getElementById('drawer');
     
+    // Detect Popover API support
+    const supportsPopover = drawer && typeof drawer.showPopover === 'function';
+
+    function isDrawerOpen() {
+        if (supportsPopover) {
+            try { return drawer.matches(':popover-open'); } catch(e) {}
+        }
+        return drawer && drawer.classList.contains('is-open');
+    }
+
+    function openDrawer() {
+        if (!drawer) return;
+        if (supportsPopover) {
+            try { drawer.showPopover(); return; } catch(e) {}
+        }
+        drawer.removeAttribute('hidden');
+        drawer.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDrawer() {
+        if (!drawer) return;
+        if (supportsPopover) {
+            try { drawer.hidePopover(); return; } catch(e) {}
+        }
+        drawer.classList.remove('is-open');
+        drawer.setAttribute('hidden', '');
+        document.body.style.overflow = '';
+    }
+
     function togglePlayer() {
-        if (drawer) {
-            if (drawer.matches(':popover-open')) {
-                drawer.hidePopover();
-            } else {
-                drawer.showPopover();
-            }
+        if (isDrawerOpen()) {
+            closeDrawer();
+        } else {
+            openDrawer();
         }
     }
+
+    // Expose close function globally so close button in player can use it
+    window.closePlayerDrawer = closeDrawer;
     
     // Bind mobile player trigger (navbar center)
     if (mobilePlayerTrigger) {
@@ -3742,6 +3801,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Bind unified player trigger (desktop/tablet)
     if (unifiedPlayerTrigger) {
         unifiedPlayerTrigger.addEventListener('click', togglePlayer);
+    }
+
+    // Bind close button inside player drawer
+    const drawerCloseBtn = document.getElementById('closeBtn');
+    if (drawerCloseBtn) {
+        drawerCloseBtn.addEventListener('click', closeDrawer);
+    }
+
+    // Handle backdrop click to close (for non-popover mode)
+    if (drawer && !supportsPopover) {
+        drawer.addEventListener('click', (e) => {
+            if (e.target === drawer) closeDrawer();
+        });
+    }
+
+    // Bind drawerCurtain and drawerDrag for non-popover browsers
+    if (!supportsPopover) {
+        const drawerCurtain = drawer && drawer.querySelector('.drawerCurtain');
+        const drawerDrag = drawer && drawer.querySelector('.drawerDrag');
+        if (drawerCurtain) drawerCurtain.addEventListener('click', closeDrawer);
+        if (drawerDrag) drawerDrag.addEventListener('click', closeDrawer);
     }
 });
 </script>

@@ -1,0 +1,115 @@
+/* ============================================================
+   UNIFIED PLAYER CSS
+   Responsive adjustments for the music player drawer
+   Note: Core drawer styles are defined in the inline <style>
+   block in index.html above the drawer element.
+   ============================================================ */
+
+/* Fallback for browsers that do not support the Popover API */
+.drawer {
+    display: none;
+}
+.drawer.is-open,
+.drawer:popover-open {
+    display: block;
+}
+
+/* Tablet/Desktop: Centered modal-style drawer */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .drawer.is-open,
+    .drawer:popover-open {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .drawerScroller {
+        height: auto;
+        max-height: 85vh;
+        width: 100%;
+        max-width: 520px;
+        overflow-y: auto;
+        scroll-snap-type: none;
+        border-radius: var(--radius-2xl);
+    }
+
+    .drawerSlide {
+        min-height: auto;
+        height: auto;
+    }
+
+    .drawerAnchors {
+        display: none;
+    }
+
+    .drawerContent {
+        min-height: auto;
+        border-radius: var(--radius-2xl);
+        max-height: 85vh;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    .drawerCurtain {
+        display: block;
+    }
+}
+
+/* Desktop: Larger centered modal */
+@media (min-width: 1024px) {
+    .drawer.is-open,
+    .drawer:popover-open {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+    }
+
+    .drawerScroller {
+        height: auto;
+        max-height: 90vh;
+        width: 100%;
+        max-width: 600px;
+        overflow-y: auto;
+        scroll-snap-type: none;
+        border-radius: var(--radius-2xl);
+    }
+
+    .drawerSlide {
+        min-height: auto;
+        height: auto;
+    }
+
+    .drawerAnchors {
+        display: none;
+    }
+
+    .drawerContent {
+        min-height: auto;
+        border-radius: var(--radius-2xl);
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    .drawerCurtain {
+        display: block;
+    }
+}
+
+/* Playing state indicator for triggers */
+.unified-trigger.playing {
+    background: var(--accent-primary);
+    color: var(--text-on-accent);
+    border-color: var(--accent-primary);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .drawer,
+    .drawerContent {
+        transition: none;
+        animation: none;
+    }
+}
