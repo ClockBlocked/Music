@@ -35,40 +35,7 @@ MyBeats:  Stream & share your favorite music for free.
 <link rel="icon" href="favicon.ico" type="image/x-icon" />
 <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
 
-<link rel="stylesheet" href="./styleSheets/overlays.css" />
-<link rel="stylesheet" href="./styleSheets/extra.css" />
-<link rel="stylesheet" href="./styleSheets/dynamicOverlays.css" />
-
-<link rel="stylesheet" href="./styleSheets/main.css" />
-<link rel="stylesheet" href="./styleSheets/pages/core.css" />
-<link rel="stylesheet" href="./styleSheets/components/breadCrumbs.css" />
-<link rel="stylesheet" href="./styleSheets/components/navbarPlayer.css" />
-<link rel="stylesheet" href="./styleSheets/components/lists.css" />
-<link rel="stylesheet" href="./styleSheets/components/playlists.css" />
-<link rel="stylesheet" href="./styleSheets/pages/home.css" />
-<link rel="stylesheet" href="./styleSheets/pages/artist.css" />
-<link rel="stylesheet" href="./styleSheets/global/animatedly.css" />
-<link rel="stylesheet" href="./styleSheets/global/fonts.css" />
-<link rel="stylesheet" href="./styleSheets/global/svg.css" />
-
-<!-- Unified responsive stylesheets -->
-<link rel="stylesheet" href="./styleSheets/unified-player.css" />
-<link rel="stylesheet" href="./styleSheets/responsive-layout.css" />
-<link rel="stylesheet" href="./styleSheets/inline-styles.css" />
-<link rel="stylesheet" href="./styleSheets/tailwind-conversion.css" />
-
-<!-- Responsive stylesheets -->
-<link 
-    rel="stylesheet" 
-    media="screen and (min-width: 768px) and (max-width: 1024px)" 
-    href="./styleSheets/responsive/tablet.css"
->
-
-<link 
-    rel="stylesheet" 
-    media="screen and (min-width: 1024px)" 
-    href="./styleSheets/responsive/desktop.css"
->
+<link rel="stylesheet" href="./styleSheets/bundle.css" />
 
 <!-- L I B R A R I E S ------------->
 <link
@@ -96,9 +63,6 @@ MyBeats:  Stream & share your favorite music for free.
   gtag("js", new Date());
   gtag("config", "G-P0KCT8TSPW");
 </script>
-
-<link rel="stylesheet" href="./styleSheets/pages/artist.css">
-
 
 <style>
 /*
@@ -3692,12 +3656,6 @@ Add this to your styleSheets/main.css file
 
 </div><!-- W R A P P E R -->
 
-<!-- L I B R A R I E S -->
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/preline@2.0.3/dist/preline.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tippy.js@6.3.7/dist/tippy.umd.min.js"></script>
-
 <!-- Refactored JavaScript Modules (New 6-file structure) -->
 <!-- Music Library -->
 <script type="module" src="./content/library.js"></script>
@@ -3799,13 +3757,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('📄 DOMContentLoaded - Starting app...');
         await app.initialize();
     });
-</script>
-
-<!-- Debug Console (Optional - remove in production) -->
-<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>
-  eruda.init();
-  eruda.show('console');
 </script>
 
 </body>

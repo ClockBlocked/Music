@@ -9,10 +9,6 @@ import { render, create } from "./templates.js";
 import { helpers } from "./helpers.js";
 import { musicSearch } from "./search.js";
 
-// Re-export from utilities/parsers.js (external dependency)
-import { encodeURIComponent } from './utilities/parsers.js';
-export { encodeURIComponent };
-
 // Import page-related modules
 import { homePage, views } from './pages/statics.js';
 import { pageLoader, navigation } from './pages/rendering.js';
